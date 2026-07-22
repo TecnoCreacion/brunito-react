@@ -1,0 +1,9 @@
+{
+    "printWidth": 550,
+    "tabWidth": 4,
+    "endOfLine": "auto",
+    "bracketSameLine": false,
+    "singleAttributePerLine": false,
+    "htmlWhitespaceSensitivity": "ignore",
+    "phpWhitespaceSensitivity": "ignore"
+}
