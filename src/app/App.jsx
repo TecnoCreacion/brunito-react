@@ -1,16 +1,27 @@
-import { RouterProvider } from "react-router-dom";
-import { router } from "@/router"; // Crearemos esto en el Paso 3
+import { AppProviders } from "./providers";
+import { AppRouter } from "@/routes";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { LoadingScreen } from "@/shared/components/LoadingScreen/LoadingScreen";
 
-// Estilos globales de Tabler (Bootstrap 5 vitaminado)
-import "@tabler/core/dist/css/tabler.min.css";
-// Scripts de Tabler (necesario para dropdowns, modales, offcanvas, etc.)
-import "@tabler/core/dist/js/tabler.min.js";
+// 1. Creamos un componente interno que ya está envuelto por los Providers
+const AppBootstrap = () => {
+    // Como AppBootstrap está dentro de AppProviders, useAuth funciona perfectamente
+    const { loading } = useAuth();
 
-function App() {
+    // 2. Si Laravel está validando el token inicial, detenemos el renderizado
+    if (loading) {
+        return <LoadingScreen message="Validando credenciales y permisos..." />;
+    }
+
+    // 3. Una vez validada la sesión (éxito o fallo), montamos el sistema de rutas
+    return <AppRouter />;
+};
+
+export const App = () => {
     return (
-        // RouterProvider es el motor que inyectará las URLs
-        <RouterProvider router={router} />
+        <AppProviders>
+            {/* AppBootstrap se encarga de conectar el estado global con el Router */}
+            <AppBootstrap />
+        </AppProviders>
     );
-}
-
-export default App;
+};
