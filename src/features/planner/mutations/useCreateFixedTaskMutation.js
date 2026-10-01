@@ -9,8 +9,8 @@ export const useCreateFixedTaskMutation = (userId) => {
         mutationFn: (taskData) => plannerService.createFixedTask(taskData),
         onSuccess: () => {
             // 🚀 Invalidamos la caché para que el SidebarWidget se actualice automáticamente sin recargar la página
-            queryClient.invalidateQueries({ queryKey: plannerKeys.fixedTasks(userId) });
-            queryClient.invalidateQueries({ queryKey: plannerKeys.events(userId) });
+            queryClient.invalidateQueries({ queryKey: plannerKeys.fixedTasks.all(userId) });
+            queryClient.invalidateQueries({ queryKey: plannerKeys.events.all(userId) });
         },
         onError: (error) => {
             // Aquí puedes conectar tu sistema de notificaciones global (Toasts)

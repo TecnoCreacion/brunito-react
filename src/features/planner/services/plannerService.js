@@ -34,7 +34,8 @@ export const plannerService = {
     getFixedTasks: async (userId) => {
         // Delegamos a Laravel la responsabilidad de filtrar por usuario si es necesario
         const { data } = await apiClient.post(plannerApi.getFixedTasks, {
-            user_id: userId,
+            with: ["rules"],
+            where: { user_id: userId },
         });
 
         // Retornamos únicamente la data limpia (Adapter conceptual implícito)

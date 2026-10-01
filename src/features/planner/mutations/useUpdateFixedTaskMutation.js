@@ -13,12 +13,12 @@ export const useUpdateFixedTaskMutation = (userId) => {
             // 🚀 Invalidación inteligente: "Invalidar únicamente lo necesario"
             // Forzamos la recarga del SidebarWidget
             queryClient.invalidateQueries({
-                queryKey: plannerKeys.fixedTasks.list(userId),
+                queryKey: plannerKeys.fixedTasks.all(userId),
             });
 
             // Si la tarea fija tiene impacto visual en el calendario, también invalidamos los eventos
             queryClient.invalidateQueries({
-                queryKey: plannerKeys.events.list(userId),
+                queryKey: plannerKeys.events.allByUser(userId),
             });
         },
 
