@@ -10,47 +10,28 @@ const DEFAULT_FORM_DATA = {
     day_of_month: "",
     requires_business_day: false,
     notebook_id: "",
+    tags: [],
 };
 
 // 🚀 Agregamos isOpen a los parámetros
 export const useFixedTaskForm = (initialData, isOpen, onSubmitCallback) => {
     const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
     const [step, setStep] = useState(1);
+    const [tagInput, setTagInput] = useState("");
 
     // 🚀 Ahora el efecto escucha a isOpen. Cada vez que se abra el modal, evaluará qué hacer.
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
-                const rawRules = initialData.rules || [];
-                const currentTagIds = initialData.tags ? initialData.tags.map((t) => t.id) : [];
-                let adaptedSchedules = [{ ...DEFAULT_SCHEDULE }];
-                let adaptedMonthly = {};
-
-                if (initialData.recurrence_type === "work_shift" && rawRules.length > 0) {
-                    adaptedSchedules = rawRules.map((rule) => ({
-                        days_of_week: Array.isArray(rule.days_of_week) ? rule.days_of_week.map(Number) : [],
-                        start_time: rule.start_time || "",
-                        end_time: rule.end_time || "",
-                    }));
-                } else if (initialData.recurrence_type === "monthly_reminder" && rawRules.length > 0) {
-                    adaptedMonthly = {
-                        day_of_month: rawRules[0].day_of_month ?? "",
-                        requires_business_day: rawRules[0].requires_business_day ?? false,
-                    };
-                }
-
                 setFormData({
                     ...DEFAULT_FORM_DATA,
                     ...initialData,
-                    ...adaptedMonthly,
-                    schedules: adaptedSchedules,
-                    rotation_week: rawRules[0]?.rotation_week ?? "",
-                    notebook_id: initialData.notebook_id ?? "",
-                    tag_ids: currentTagIds,
                 });
+
                 setStep(2);
             } else {
                 setFormData(DEFAULT_FORM_DATA);
+
                 setStep(1);
             }
         }
@@ -90,9 +71,25 @@ export const useFixedTaskForm = (initialData, isOpen, onSubmitCallback) => {
         });
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmitCallback(formData);
+    // 🚀 Lógica de etiquetas encapsulada
+    const handleAddTag = (tagToAdd) => {
+        const trimmedTag = tagToAdd.trim();
+        if (!trimmedTag) return;
+
+        setFormData((prev) => {
+            const currentTags = prev.tags || [];
+            if (currentTags.includes(trimmedTag)) return prev;
+            return { ...prev, tags: [...currentTags, trimmedTag] };
+        });
+
+        setTagInput("");
+    };
+
+    const handleRemoveTag = (tagToRemove) => {
+        setFormData((prev) => ({
+            ...prev,
+            tags: (prev.tags || []).filter((t) => t !== tagToRemove),
+        }));
     };
 
     // 🚀 NUEVA FUNCIÓN: Alternar la selección de una etiqueta
@@ -117,9 +114,19 @@ export const useFixedTaskForm = (initialData, isOpen, onSubmitCallback) => {
         handleScheduleChange,
         handleToggleDay,
         handleNextStep: () => setStep(2),
-        handleReset: () => setFormData(DEFAULT_FORM_DATA),
-        handleSubmit,
-        isEditing: !!initialData,
+        tagInput, // 🚀 Exportamos el estado del input
+        setTagInput, // 🚀 Exportamos el setter
+        handleAddTag, // 🚀 Función para agregar
+        handleRemoveTag, // 🚀 Función para quitar
+        handleReset: () => {
+            setFormData(DEFAULT_FORM_DATA);
+            setTagInput("");
+        },
+        handleSubmit: (e) => {
+            e.preventDefault();
+            onSubmitCallback(formData);
+        },
         handleToggleFormTag,
+        isEditing: !!initialData,
     };
 };

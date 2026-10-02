@@ -1,5 +1,6 @@
 import { apiClient } from "@/config/axios";
 import { plannerApi } from "../api/plannerApi";
+import { plannerFixedTaskListAdapter } from "../adapters/plannerFixedTaskAdapter";
 
 export const plannerService = {
     getPlanners: async (userId) => {
@@ -34,12 +35,12 @@ export const plannerService = {
     getFixedTasks: async (userId) => {
         // Delegamos a Laravel la responsabilidad de filtrar por usuario si es necesario
         const { data } = await apiClient.post(plannerApi.getFixedTasks, {
-            with: ["rules"],
+            with: ["rules", "tags"],
             where: { user_id: userId },
         });
 
         // Retornamos únicamente la data limpia (Adapter conceptual implícito)
-        return data.data;
+        return plannerFixedTaskListAdapter(data.data);
     },
 
     createFixedTask: async (data) => {

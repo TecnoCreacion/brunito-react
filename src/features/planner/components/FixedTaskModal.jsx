@@ -15,7 +15,7 @@ const WEEK_DAYS = [
 // 🚀 Agregamos initialData a las props
 export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags = [], onSave, initialData = null }) => {
     // 🚀 Pasamos initialData al Hook
-    const { formData, step, handleChange, handleAddSchedule, handleRemoveSchedule, handleScheduleChange, handleToggleDay, handleNextStep, handleReset, handleSubmit, setStep, isEditing } = useFixedTaskForm(initialData, isOpen, (data) => {
+    const { formData, step, handleChange, handleAddSchedule, handleRemoveSchedule, handleScheduleChange, handleToggleDay, handleNextStep, handleReset, handleSubmit, setStep, isEditing, tagInput, setTagInput, handleAddTag, handleRemoveTag } = useFixedTaskForm(initialData, isOpen, (data) => {
         onSave(data);
         handleClose();
     });
@@ -24,6 +24,8 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
         handleReset();
         onClose();
     };
+
+    const unselectedSuggestions = availableTags.filter((t) => !(formData.tags || []).includes(t));
 
     return (
         <Modal isOpen={isOpen} onClose={handleClose} title={isEditing ? "Editar Tarea Recurrente" : "Configurar Tarea Recurrente"} size="lg">
@@ -137,11 +139,12 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                             </button>
 
                                             <div className="mt-3">
-                                                <label className="form-label text-muted small text-uppercase">Rotación</label>
+                                                <label className="form-label text-muted small">Rotación</label>
                                                 <select className="form-select" value={formData.rotation_week} onChange={(e) => handleChange("rotation_week", e.target.value)}>
-                                                    <option value="">Aplica todas las semanas (Fijo)</option>
-                                                    <option value="1">Semana A (Impares)</option>
-                                                    <option value="2">Semana B (Pares)</option>
+                                                    <option value="">Seleccion manual</option>
+                                                    <option value="1">Aplica todas las semanas (Fijo)</option>
+                                                    <option value="2">Semana A (Impares)</option>
+                                                    <option value="3">Semana B (Pares)</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -185,23 +188,56 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                         </select>
                                     </div>
 
-                                    <div className="col-sm-6">
+                                    <div className="col-12 mt-4 pt-3 border-top">
                                         <label className="form-label text-muted d-flex align-items-center gap-2">
-                                            <IconTags size={16} /> Etiquetas (Opcional)
+                                            <IconTags size={16} /> Etiquetas (Tags)
                                         </label>
-                                        <div className="d-flex flex-wrap gap-2 mt-1">
-                                            {availableTags.length === 0 ? (
-                                                <span className="text-muted small">No hay etiquetas disponibles.</span>
-                                            ) : (
-                                                availableTags.map((tag) => {
-                                                    const isSelected = formData.tag_ids?.includes(tag.id);
-                                                    return (
-                                                        <button key={tag.id} type="button" onClick={() => handleToggleFormTag(tag.id)} className={`badge border-0 rounded-pill px-3 py-2 cursor-pointer transition-base ${isSelected ? "bg-primary text-white" : "bg-light text-secondary border"}`} style={{ fontSize: "0.85rem" }}>
-                                                            {tag.name}
-                                                        </button>
-                                                    );
-                                                })
-                                            )}
+
+                                        <div className="input-group mb-2 shadow-sm">
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                placeholder="Escribe una etiqueta y presiona Enter"
+                                                value={tagInput}
+                                                onChange={(e) => setTagInput(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        handleAddTag(tagInput);
+                                                    }
+                                                }}
+                                            />
+
+                                            <button type="button" className="btn btn-outline-secondary" onClick={() => handleAddTag(tagInput)} disabled={!tagInput.trim()}>
+                                                Agregar
+                                            </button>
+                                        </div>
+
+                                        {/* Sugerencias Inteligentes */}
+                                        {unselectedSuggestions.length > 0 && (
+                                            <div className="d-flex flex-wrap gap-1 mb-3">
+                                                <span className="text-muted small me-2 align-self-center">Sugerencias:</span>
+                                                {unselectedSuggestions.map((t) => (
+                                                    <span key={t} className="badge bg-secondary-lt cursor-pointer transition-colors hover:bg-secondary hover:text-white" onClick={() => handleAddTag(t)} style={{ cursor: "pointer" }}>
+                                                        + {t}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Etiquetas Seleccionadas */}
+                                        <div className="d-flex flex-wrap gap-2 mt-2">
+                                            {(!formData.tags || formData.tags.length === 0) && <span className="text-muted small">No hay etiquetas seleccionadas.</span>}
+
+                                            {formData.tags?.map((tag) => (
+                                                <span key={tag} className="badge bg-primary text-white d-flex align-items-center gap-2 px-2 py-1" style={{ fontSize: "0.85rem" }}>
+                                                    {tag}
+
+                                                    <span className="opacity-75 hover:opacity-100 transition-opacity" style={{ cursor: "pointer", paddingLeft: "4px" }} onClick={() => handleRemoveTag(tag)} title="Quitar etiqueta">
+                                                        &times;
+                                                    </span>
+                                                </span>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
