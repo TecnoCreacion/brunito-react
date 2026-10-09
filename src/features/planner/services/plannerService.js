@@ -63,4 +63,14 @@ export const plannerService = {
 
         return data.data;
     },
+
+    scheduleTasksForWeek: async (weekNumber, taskIds) => {
+        // Enviamos el payload limpio a Laravel: { week_number: 42, task_ids: [1, 2, 2] }
+        const response = await apiClient.patch(plannerApi.scheduleTasksForWeek, {
+            week_number: weekNumber,
+            task_ids: taskIds,
+        });
+
+        return response.data;
+    },
 };

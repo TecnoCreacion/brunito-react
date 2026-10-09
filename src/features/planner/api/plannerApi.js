@@ -6,4 +6,5 @@ export const plannerApi = {
     createFixedTask: "/planner_fixed_tasks",
     updateFixedTask: "/planner_fixed_tasks",
     getTags: "/planner_tags/search",
+    scheduleTasksForWeek: "/planner_fixed_tasks/search",
 };

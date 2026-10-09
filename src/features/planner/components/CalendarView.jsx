@@ -8,7 +8,7 @@ import { IconClock } from "@tabler/icons-react";
 import { Tooltip } from "@/shared/components/Tooltip/Tooltip";
 import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 
-export const CalendarView = ({ events = [], onDateSelect, onEventClick }) => {
+export const CalendarView = ({ events = [], onDateSelect, onEventClick, onWeekClick }) => {
     // Detectamos si es una pantalla móvil (menor a 768px, estándar de Bootstrap/Tabler)
     const isMobile = useMediaQuery("(max-width: 767px)");
 
@@ -123,7 +123,30 @@ export const CalendarView = ({ events = [], onDateSelect, onEventClick }) => {
                     firstDay={1}
                     weekNumberCalculation="ISO"
                     weekNumberContent={(arg) => {
-                        return `Sem. ${arg.num}`;
+                        return (
+                            <span
+                                className="badge bg-primary-lt text-primary cursor-pointer transition-colors px-2 py-1 shadow-none border border-primary-subtle"
+                                style={{ fontSize: "0.75rem", position: "relative", zIndex: 10 }}
+                                title={`Gestionar semana ${arg.num}`}
+                                // 🚀 ARQUITECTURA: Aislar el clic para que no llegue al grid subyacente
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation(); // Detiene la propagación hacia el evento 'select'
+
+                                    if (onWeekClick) onWeekClick(arg.num, arg.date);
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.classList.remove("bg-primary-lt", "text-primary");
+                                    e.currentTarget.classList.add("bg-primary", "text-white");
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.classList.remove("bg-primary", "text-white");
+                                    e.currentTarget.classList.add("bg-primary-lt", "text-primary");
+                                }}
+                            >
+                                Sem. {arg.num}
+                            </span>
+                        );
                     }}
                 />
             </div>
