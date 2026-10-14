@@ -6,12 +6,12 @@ export const useWeekTasksForm = (isOpen, initialTaskIds = [], onSaveCallback) =>
     const [selectedTaskIds, setSelectedTaskIds] = useState([]);
 
     useEffect(() => {
-        if (isOpen) {
-            setSelectedTaskIds(initialTaskIds);
-        } else {
+        if (!isOpen) {
             setSelectedTaskIds([]);
         }
-    }, [isOpen, initialTaskIds]);
+
+        setSelectedTaskIds([...initialTaskIds]);
+    }, [isOpen]);
 
     // Función para agregar un turno a la bolsa de la semana
     const handleAddTask = (taskId) => {

@@ -4,19 +4,28 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 
 // Componentes
-import { CalendarView } from "../components/CalendarView";
+import { BigCalendarView } from "../components/BigCalendarView";
+import { PlannerToolbar } from "../components/PlannerToolbar";
 import { SidebarWidget } from "../components/SidebarWidget";
 import { PlannerModal } from "../components/PlannerModal";
 import { FixedTaskModal } from "../components/FixedTaskModal";
 import { WeekTasksModal } from "../components/WeekTasksModal";
+
 import { FAB } from "@/shared/components/FAB/FAB";
+import { MiniCalendarPicker } from "@/shared/components/MiniCalendarPicker/MiniCalendarPicker";
 
 // Hooks y Mutaciones
 import { usePlanner } from "../hooks/usePlanner";
+import { usePlannerResources } from "../hooks/usePlannerResources";
 import { usePlannerSidebar } from "../hooks/usePlannerSidebar";
+import { useCalendarControls } from "../hooks/useCalendarControls";
+
 import { useCreateFixedTaskMutation } from "../mutations/useCreateFixedTaskMutation";
 import { useUpdateFixedTaskMutation } from "../mutations/useUpdateFixedTaskMutation";
 import { useScheduleTasksForWeekMutation } from "../mutations/useScheduleTasksForWeekMutation";
+
+import moment from "moment";
+import "moment/locale/es";
 
 export const PlannerPage = () => {
     useDocumentTitle("Agenda y Calendario");
@@ -25,7 +34,10 @@ export const PlannerPage = () => {
     const isMobile = useMediaQuery("(max-width: 767px)");
 
     const { events, isLoading: isLoadingEvents, isError } = usePlanner(user?.id);
+    const { resources, isLoading: isLoadingResources, isError: isErrorResources } = usePlannerResources(user?.id);
     const { fixedTasks, tags, isLoading: isLoadingSidebar } = usePlannerSidebar(user?.id);
+
+    const calendarControls = useCalendarControls("month");
 
     // 🚀 Instanciamos ambas Mutaciones para respetar la separación de responsabilidades[cite: 1]
     const { mutate: createFixedTask, isPending: isCreatingFixedTask } = useCreateFixedTaskMutation(user?.id);
@@ -52,8 +64,10 @@ export const PlannerPage = () => {
 
     const filteredEvents = useMemo(() => {
         if (selectedTags.length === 0 || !events) return events;
+
         return events.filter((event) => {
             const eventTags = event.extendedProps?.tags || event.tags || [];
+
             return eventTags.some((tag) => selectedTags.includes(tag.id));
         });
     }, [events, selectedTags]);
@@ -105,9 +119,16 @@ export const PlannerPage = () => {
         }
     };
 
-    const handleDateSelect = (selectInfo) => {
+    const handleDateSelect = (slotInfo) => {
+        // 1. Limpiamos cualquier evento previamente seleccionado
         setSelectedEvent(null);
-        setSelectedDate(selectInfo.startStr);
+
+        // 2. react-big-calendar entrega slotInfo.start como un objeto Date nativo.
+        // Lo formateamos a un string seguro (YYYY-MM-DD) para mantener la consistencia con tu estado anterior.
+        // Utilizamos moment (que ya tienes en el proyecto) para evitar desfases de zona horaria nativos de JS.
+        const formattedDate = moment(slotInfo.start).format("YYYY-MM-DD");
+
+        setSelectedDate(formattedDate);
         setIsModalOpen(true);
     };
 
@@ -133,7 +154,7 @@ export const PlannerPage = () => {
         );
     };
 
-    const handleWeekClick = (weekNumber, dateStr) => {
+    const handleWeekClick = (weekNumber) => {
         setSelectedWeekNumber(weekNumber);
         setIsWeekModalOpen(true);
     };
@@ -150,47 +171,68 @@ export const PlannerPage = () => {
         setTimeout(() => setSelectedEvent(null), 300);
     };
 
+    if (isError)
+        return (
+            <div className="alert alert-danger" role="alert">
+                Error al cargar los recordatorios desde el servidor.
+            </div>
+        );
+
     return (
-        <div className="page-body">
-            <div className="container-xl">
-                {isError && (
-                    <div className="alert alert-danger" role="alert">
-                        Error al cargar los recordatorios desde el servidor.
+        <>
+            <div className="row w-100">
+                {/* SIDEBAR IZQUIERDO: Mini-calendario e Filtros */}
+                <div className="col-lg-2 col-md-3">
+                    <div className="card shadow-sm border-0 mb-3">
+                        <div className="card-body">
+                            <h3 className="card-title">Navegación</h3>
+                            {/* 🚀 MINI CALENDARIO: Simplemente emite una fecha hacia el Hook */}
+                            <MiniCalendarPicker selectedDate={calendarControls.currentDate} onChange={(date) => calendarControls.changeDate(date)} />
+                        </div>
                     </div>
-                )}
 
-                <div className="row g-3">
-                    <div className="col-lg-9 col-md-8">{isLoadingEvents ? <div className="card shadow-sm border-0 p-5 text-center text-muted">Cargando agenda y recordatorios...</div> : <CalendarView events={filteredEvents} onDateSelect={handleDateSelect} onEventClick={handleEventClick} onWeekClick={handleWeekClick} />}</div>
-
-                    <div className="col-lg-3 col-md-4">
-                        <SidebarWidget fixedTasks={fixedTasks} tags={tags} selectedTags={selectedTags} onToggleTag={handleToggleTag} onAddFixedTask={handleAddFixedTask} onEditFixedTask={handleEditFixedTask} isLoading={isLoadingSidebar} />
-                    </div>
+                    <SidebarWidget fixedTasks={fixedTasks} tags={tags} selectedTags={selectedTags} onToggleTag={handleToggleTag} onAddFixedTask={handleAddFixedTask} onEditFixedTask={handleEditFixedTask} isLoading={isLoadingSidebar} />
                 </div>
 
-                {/* Modal del Calendario Principal */}
-                <PlannerModal isOpen={isModalOpen} onClose={handleCloseModal} selectedDate={selectedDate} initialData={selectedEvent} userId={user?.id} />
+                {/* ÁREA PRINCIPAL: Calendario Grande */}
+                <div className="col-lg-10 col-md-9">
+                    {isLoadingEvents ? (
+                        <div className="card shadow-sm border-0 p-5 text-center text-muted">Cargando agenda y recordatorios...</div>
+                    ) : (
+                        <>
+                            {/* 🚀 BARRA EXTERNA */}
+                            <PlannerToolbar controls={calendarControls} />
 
-                {/* 🚀 Modal de Tareas Fijas actualizado */}
-                <FixedTaskModal
-                    isOpen={isFixedTaskModalOpen}
-                    onClose={handleCloseFixedTaskModal} // Usamos nuestra nueva función de cierre seguro
-                    onSave={handleSaveFixedTask}
-                    isSaving={isSavingFixedTask}
-                    notebooks={[]}
-                    initialData={selectedFixedTask}
-                />
-
-                <WeekTasksModal
-                    isOpen={isWeekModalOpen}
-                    onClose={() => setIsWeekModalOpen(false)}
-                    onSave={handleScheduleWeek}
-                    weekNumber={selectedWeekNumber}
-                    availableManualTasks={manualFixedTasks}
-                    isSaving={isSchedulingWeek} // El estado pending de tu mutación
-                />
-
-                {isMobile && !isModalOpen && <FAB onClick={handleFabClick} ariaLabel="Agregar nuevo evento" />}
+                            {/* 🚀 CALENDARIO (Sin Cabecera) */}
+                            <BigCalendarView events={filteredEvents} resources={resources} controls={calendarControls} onEventClick={handleEventClick} onDateSelect={handleDateSelect} />
+                        </>
+                    )}
+                </div>
             </div>
-        </div>
+
+            {/* Modal del Calendario Principal */}
+            <PlannerModal isOpen={isModalOpen} onClose={handleCloseModal} selectedDate={selectedDate} initialData={selectedEvent} userId={user?.id} />
+
+            {/* 🚀 Modal de Tareas Fijas actualizado */}
+            <FixedTaskModal
+                isOpen={isFixedTaskModalOpen}
+                onClose={handleCloseFixedTaskModal} // Usamos nuestra nueva función de cierre seguro
+                onSave={handleSaveFixedTask}
+                isSaving={isSavingFixedTask}
+                notebooks={[]}
+                initialData={selectedFixedTask}
+            />
+
+            <WeekTasksModal
+                isOpen={isWeekModalOpen}
+                onClose={() => setIsWeekModalOpen(false)}
+                onSave={handleScheduleWeek}
+                weekNumber={selectedWeekNumber}
+                availableManualTasks={manualFixedTasks}
+                isSaving={isSchedulingWeek} // El estado pending de tu mutación
+            />
+
+            {isMobile && !isModalOpen && <FAB onClick={handleFabClick} ariaLabel="Agregar nuevo evento" />}
+        </>
     );
 };

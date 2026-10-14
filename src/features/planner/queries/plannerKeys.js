@@ -19,4 +19,5 @@ export const plannerKeys = {
     },
 
     tags: () => [...plannerKeys.all, "tags"],
+    resources: () => [...plannerKeys.all, "resources"],
 };

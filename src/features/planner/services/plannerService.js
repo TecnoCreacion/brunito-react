@@ -5,7 +5,7 @@ import { plannerFixedTaskListAdapter } from "../adapters/plannerFixedTaskAdapter
 export const plannerService = {
     getPlanners: async (userId) => {
         const response = await apiClient.post(plannerApi.getPlanners, {
-            with: ["tags"],
+            with: ["tags", "fixedTask"],
             where: {
                 user_id: userId,
             },
@@ -60,6 +60,12 @@ export const plannerService = {
      */
     getTags: async () => {
         const { data } = await apiClient.post(plannerApi.getTags);
+
+        return data.data;
+    },
+
+    getResources: async () => {
+        const { data } = await apiClient.post(plannerApi.getResources);
 
         return data.data;
     },
