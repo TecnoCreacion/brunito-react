@@ -3,6 +3,12 @@ import { plannerApi } from "../api/plannerApi";
 import { plannerFixedTaskListAdapter } from "../adapters/plannerFixedTaskAdapter";
 
 export const plannerService = {
+    getPlannerById: async (id, params = {}) => {
+        const response = await apiClient.get(`${plannerApi.getPlannerById}/${id}`, { params });
+
+        return response.data.data || response.data;
+    },
+
     getPlanners: async (userId) => {
         const response = await apiClient.post(plannerApi.getPlanners, {
             with: ["tags", "fixedTask"],

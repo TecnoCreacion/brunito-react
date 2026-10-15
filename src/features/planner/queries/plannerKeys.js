@@ -1,5 +1,6 @@
 export const plannerKeys = {
     all: ["planners"],
+    getPlannerById: () => [...plannerKeys.all, "planner"],
     getPlanners: () => [...plannerKeys.all, "planner"],
     getPlannersByUser: (userId) => [...plannerKeys.getPlanners(), { user_id: userId }],
 

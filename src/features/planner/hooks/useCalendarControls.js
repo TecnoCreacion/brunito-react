@@ -6,6 +6,8 @@ export const useCalendarControls = (initialView = "month") => {
     const [currentDate, setCurrentDate] = useState(new Date());
     // Estado de la vista actual (month, week, day, agenda)
     const [currentView, setCurrentView] = useState(initialView);
+    // Estado del idioma
+    const [currentLocale, setCurrentLocale] = useState("es");
 
     // Navegación de tiempo
     const goToNext = () => setCurrentDate(moment(currentDate).add(1, currentView).toDate());
@@ -18,13 +20,19 @@ export const useCalendarControls = (initialView = "month") => {
     // Cambio de vista
     const changeView = (view) => setCurrentView(view);
 
+    const changeLocale = (locale) => {
+        setCurrentLocale(locale);
+    };
+
     return {
         currentDate,
         currentView,
+        currentLocale,
         goToNext,
         goToPrev,
         goToToday,
         changeDate,
         changeView,
+        changeLocale,
     };
 };

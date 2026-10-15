@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import moment from "moment";
-import "moment/locale/es";
+import moment from "moment/min/moment-with-locales";
 
 export const MiniCalendarPicker = ({ selectedDate, onChange }) => {
     // Estado interno para saber qué mes estamos "viendo" (puede ser distinto al mes de la fecha seleccionada)
@@ -47,9 +46,11 @@ export const MiniCalendarPicker = ({ selectedDate, onChange }) => {
                 <button className="btn btn-sm btn-icon btn-ghost-secondary" onClick={handlePrevMonth} title="Mes anterior">
                     <i className="ti ti-chevron-left"></i>
                 </button>
+
                 <span className="fw-bold text-capitalize" style={{ fontSize: "0.9rem" }}>
                     {viewDate.format("MMMM YYYY")}
                 </span>
+
                 <button className="btn btn-sm btn-icon btn-ghost-secondary" onClick={handleNextMonth} title="Mes siguiente">
                     <i className="ti ti-chevron-right"></i>
                 </button>
@@ -67,6 +68,7 @@ export const MiniCalendarPicker = ({ selectedDate, onChange }) => {
                             ))}
                         </tr>
                     </thead>
+
                     <tbody>
                         {/* Dividimos el array de días en filas de 7 (semanas) */}
                         {Array.from({ length: gridDays.length / 7 }).map((_, weekIndex) => (

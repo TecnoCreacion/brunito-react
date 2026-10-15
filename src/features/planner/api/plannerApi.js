@@ -1,4 +1,5 @@
 export const plannerApi = {
+    getPlannerById: "/planners",
     getPlanners: "/planners/search", // Endpoint de Laravel que retorna la tabla de recordatorios
     create: "/planners",
     update: "/planners",

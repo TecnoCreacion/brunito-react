@@ -132,11 +132,10 @@ export const PlannerPage = () => {
         setIsModalOpen(true);
     };
 
-    const handleEventClick = (clickInfo) => {
-        const { id, title, startStr, endStr, allDay, extendedProps } = clickInfo.event;
-
-        // Flujo normal para editar un evento estándar
-        setSelectedEvent({ id, title, startStr, endStr, allDay, extendedProps });
+    const handleEventClick = (event) => {
+        // 🚀 ARQUITECTURA: Solo almacenamos el identificador único.
+        // Esto evita duplicar la fuente de verdad y previene la edición de datos obsoletos.
+        setSelectedEvent(event);
         setIsModalOpen(true);
     };
 
@@ -185,7 +184,6 @@ export const PlannerPage = () => {
                 <div className="col-lg-2 col-md-3">
                     <div className="card shadow-sm border-0 mb-3">
                         <div className="card-body">
-                            <h3 className="card-title">Navegación</h3>
                             {/* 🚀 MINI CALENDARIO: Simplemente emite una fecha hacia el Hook */}
                             <MiniCalendarPicker selectedDate={calendarControls.currentDate} onChange={(date) => calendarControls.changeDate(date)} />
                         </div>
@@ -204,7 +202,14 @@ export const PlannerPage = () => {
                             <PlannerToolbar controls={calendarControls} />
 
                             {/* 🚀 CALENDARIO (Sin Cabecera) */}
-                            <BigCalendarView events={filteredEvents} resources={resources} controls={calendarControls} onEventClick={handleEventClick} onDateSelect={handleDateSelect} />
+                            <BigCalendarView
+                                events={filteredEvents}
+                                resources={resources}
+                                controls={calendarControls}
+                                onEventClick={handleEventClick}
+                                onDateSelect={handleDateSelect}
+                                onWeekClick={handleWeekClick} // 🚀 Tu nueva funcionalidad
+                            />
                         </>
                     )}
                 </div>
