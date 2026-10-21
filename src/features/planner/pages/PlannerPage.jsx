@@ -54,7 +54,7 @@ export const PlannerPage = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
-    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [selectedPlannerId, setSelectedPlannerId] = useState(null);
 
     // 🚀 Estados para el selector de semanas
     const [isWeekModalOpen, setIsWeekModalOpen] = useState(false);
@@ -121,7 +121,7 @@ export const PlannerPage = () => {
 
     const handleDateSelect = (slotInfo) => {
         // 1. Limpiamos cualquier evento previamente seleccionado
-        setSelectedEvent(null);
+        setSelectedPlannerId(null);
 
         // 2. react-big-calendar entrega slotInfo.start como un objeto Date nativo.
         // Lo formateamos a un string seguro (YYYY-MM-DD) para mantener la consistencia con tu estado anterior.
@@ -135,7 +135,9 @@ export const PlannerPage = () => {
     const handleEventClick = (event) => {
         // 🚀 ARQUITECTURA: Solo almacenamos el identificador único.
         // Esto evita duplicar la fuente de verdad y previene la edición de datos obsoletos.
-        setSelectedEvent(event);
+        const id = typeof event === "object" ? event.id : event;
+
+        setSelectedPlannerId(id);
         setIsModalOpen(true);
     };
 
@@ -159,7 +161,7 @@ export const PlannerPage = () => {
     };
 
     const handleFabClick = () => {
-        setSelectedEvent(null);
+        setSelectedPlannerId(null);
         const today = new Date().toISOString().split("T")[0];
         setSelectedDate(today);
         setIsModalOpen(true);
@@ -167,7 +169,7 @@ export const PlannerPage = () => {
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
-        setTimeout(() => setSelectedEvent(null), 300);
+        setSelectedPlannerId(null);
     };
 
     if (isError)
@@ -216,7 +218,7 @@ export const PlannerPage = () => {
             </div>
 
             {/* Modal del Calendario Principal */}
-            <PlannerModal isOpen={isModalOpen} onClose={handleCloseModal} selectedDate={selectedDate} initialData={selectedEvent} userId={user?.id} />
+            <PlannerModal key={selectedPlannerId ? `planner-modal-${selectedPlannerId}` : `planner-modal-new-${selectedDate}`} isOpen={isModalOpen} onClose={handleCloseModal} selectedDate={selectedDate} plannerId={selectedPlannerId} userId={user?.id} />
 
             {/* 🚀 Modal de Tareas Fijas actualizado */}
             <FixedTaskModal
@@ -227,7 +229,6 @@ export const PlannerPage = () => {
                 notebooks={[]}
                 initialData={selectedFixedTask}
             />
-
             <WeekTasksModal
                 isOpen={isWeekModalOpen}
                 onClose={() => setIsWeekModalOpen(false)}
@@ -236,7 +237,6 @@ export const PlannerPage = () => {
                 availableManualTasks={manualFixedTasks}
                 isSaving={isSchedulingWeek} // El estado pending de tu mutación
             />
-
             {isMobile && !isModalOpen && <FAB onClick={handleFabClick} ariaLabel="Agregar nuevo evento" />}
         </>
     );
