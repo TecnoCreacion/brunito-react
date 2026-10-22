@@ -5,14 +5,6 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 
 const localizer = momentLocalizer(moment);
 
-// 🚀 ARQUITECTURA: Definimos las horas de inicio y fin para acortar el scroll
-// Esto evita que la vista de semana/día renderice las 24 horas y sea "muy larga".
-const minTime = new Date();
-minTime.setHours(7, 0, 0); // Comienza a las 07:00 AM
-
-const maxTime = new Date();
-maxTime.setHours(21, 0, 0); // Termina a las 09:00 PM
-
 export const BigCalendarView = ({ events = [], resources = [], controls = {}, onEventClick, onDateSelect, onWeekClick }) => {
     const { currentDate = new Date(), currentView = "month", changeDate = () => {}, changeView = () => {}, currentLocale = "es" } = controls;
 
@@ -98,9 +90,6 @@ export const BigCalendarView = ({ events = [], resources = [], controls = {}, on
             step={30}
             showMultiDayTimes
             selectable
-            // 🚀 ARQUITECTURA: Limitamos la vista a horas hábiles para evitar scroll excesivo
-            min={minTime}
-            max={maxTime}
             onSelectEvent={(event) => onEventClick && onEventClick(event.id)}
             onSelectSlot={(slotInfo) => onDateSelect && onDateSelect(slotInfo)}
             components={customComponents}

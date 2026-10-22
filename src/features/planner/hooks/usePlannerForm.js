@@ -40,14 +40,14 @@ export const usePlannerForm = ({ initialData, selectedDate, userId, onClose }) =
     useEffect(() => {
         if (initialData) {
             setTitle(initialData.title || "");
-            setDescription(initialData.extendedProps?.description || "");
-            setTags(initialData.extendedProps?.tags?.map((t) => t.name) || []);
+            setDescription(initialData.description || "");
+            setTags(initialData.tags?.map((t) => t.name) || []);
 
-            const start = parseDbDate(initialData.extendedProps?.originalStart);
+            const start = parseDbDate(initialData.start_date);
             setStartDate(start.date);
             setStartTime(start.time);
 
-            const end = parseDbDate(initialData.extendedProps?.originalEnd);
+            const end = parseDbDate(initialData.end_date);
             setEndDate(end.date);
             setEndTime(end.time);
         } else {

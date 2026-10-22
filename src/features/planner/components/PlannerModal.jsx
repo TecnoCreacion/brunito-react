@@ -180,6 +180,7 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                                 }}
                                 disabled={isPending}
                             />
+
                             <button type="button" className="btn btn-outline-secondary" onClick={() => onAddTagClick(tagInput)} disabled={isPending || !tagInput.trim()}>
                                 Agregar
                             </button>
