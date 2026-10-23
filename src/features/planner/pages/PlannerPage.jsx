@@ -229,6 +229,7 @@ export const PlannerPage = () => {
                 notebooks={[]}
                 initialData={selectedFixedTask}
             />
+
             <WeekTasksModal
                 isOpen={isWeekModalOpen}
                 onClose={() => setIsWeekModalOpen(false)}
@@ -237,6 +238,7 @@ export const PlannerPage = () => {
                 availableManualTasks={manualFixedTasks}
                 isSaving={isSchedulingWeek} // El estado pending de tu mutación
             />
+
             {isMobile && !isModalOpen && <FAB onClick={handleFabClick} ariaLabel="Agregar nuevo evento" />}
         </>
     );
