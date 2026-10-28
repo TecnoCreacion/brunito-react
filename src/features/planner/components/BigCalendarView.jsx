@@ -78,6 +78,7 @@ export const BigCalendarView = ({ events = [], resources = [], controls = {}, on
 
     return (
         <Calendar
+            className="pb-1"
             localizer={localizer}
             events={events}
             resources={resources.length > 0 ? resources : null}

@@ -76,11 +76,12 @@ export const plannerService = {
         return data.data;
     },
 
-    scheduleTasksForWeek: async (weekNumber, taskIds) => {
+    scheduleTasksForWeek: async ({ weekNumber, taskIds, isoYear = new Date().getFullYear() }) => {
         // Enviamos el payload limpio a Laravel: { week_number: 42, task_ids: [1, 2, 2] }
         const response = await apiClient.post(plannerApi.scheduleTasksForWeek, {
             week_number: weekNumber,
             task_ids: taskIds,
+            iso_year: isoYear,
         });
 
         return response.data;
