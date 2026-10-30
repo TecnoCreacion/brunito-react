@@ -6,7 +6,7 @@ export const useScheduleTasksForWeekMutation = (userId) => {
 
     return useMutation({
         // El servicio maneja la comunicación HTTP, el componente no sabe cómo se hace
-        mutationFn: ({ weekNumber, taskIds }) => plannerService.scheduleTasksForWeek(weekNumber, taskIds),
+        mutationFn: ({ weekNumber, taskIds, isoYear }) => plannerService.scheduleTasksForWeek({ weekNumber, taskIds, isoYear }),
 
         onSuccess: () => {
             // Invalidamos la caché de los eventos para que el calendario se recargue automáticamente

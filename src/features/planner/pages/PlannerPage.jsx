@@ -59,6 +59,7 @@ export const PlannerPage = () => {
     // 🚀 Estados para el selector de semanas
     const [isWeekModalOpen, setIsWeekModalOpen] = useState(false);
     const [selectedWeekNumber, setSelectedWeekNumber] = useState(null);
+    const [selectedIsoYear, setSelectedIsoYear] = useState(null); // Nuevo estado para la precisión ISO
 
     const manualFixedTasks = fixedTasks?.filter((task) => !task.rotation_week || task.rotation_week === "") || [];
 
@@ -144,19 +145,25 @@ export const PlannerPage = () => {
     const handleScheduleWeek = (selectedTaskIds) => {
         // Disparamos la mutación
         scheduleTasksForWeek(
-            { weekNumber: selectedWeekNumber, taskIds: selectedTaskIds },
+            { weekNumber: selectedWeekNumber, taskIds: selectedTaskIds, isoYear: selectedIsoYear },
             {
                 onSuccess: () => {
                     setIsWeekModalOpen(false);
                     setSelectedWeekNumber(null);
+                    setSelectedIsoYear(null);
                     // Opcional: Mostrar Toast corporativo de éxito
                 },
             },
         );
     };
 
-    const handleWeekClick = (weekNumber) => {
+    const handleWeekClick = (weekNumber, dateValue) => {
         setSelectedWeekNumber(weekNumber);
+
+        // Calculamos el año ISO exacto a partir del objeto Date de la celda de la semana
+        const isoYear = moment(dateValue).isoWeekYear();
+        setSelectedIsoYear(isoYear);
+
         setIsWeekModalOpen(true);
     };
 
