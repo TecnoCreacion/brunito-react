@@ -1,0 +1,9 @@
+/* Utilidad para ocultar barras de desplazamiento manteniendo la funcionalidad de scroll (Carrusel Móvil) */
+.hide-scrollbar {
+    scrollbar-width: none; /* Soporte para Firefox */
+    -ms-overflow-style: none; /* Soporte para IE/Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Soporte para Chrome, Safari y Opera */
+}

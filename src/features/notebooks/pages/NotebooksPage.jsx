@@ -69,46 +69,44 @@ export const NotebooksPage = () => {
     };
 
     return (
-        <div className="page-body">
-            <div className="container-xl">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h2 className="page-title">Tablero de Libretas</h2>
-                        <p className="text-muted small mb-0">Organiza tus espacios de notas visuales</p>
-                    </div>
-
-                    <button className="btn btn-primary d-flex align-items-center gap-1" onClick={handleQuickCreate} disabled={isCreating}>
-                        {isCreating ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : <IconPlus size={18} />}
-                        <span>{isCreating ? "Creando..." : "Nueva Libreta"}</span>
-                    </button>
+        <div className="page-body mt-0 pt-0 px-3">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 className="page-title">Tablero de Libretas</h2>
+                    <p className="text-muted small mb-0">Organiza tus espacios de notas visuales</p>
                 </div>
 
-                {isError && (
-                    <div className="alert alert-danger" role="alert">
-                        Error al sincronizar las libretas con el servidor.
-                    </div>
-                )}
-
-                {isLoading ? (
-                    <div className="card shadow-sm border-0 p-5 text-center text-muted">
-                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                        Cargando tablero de libretas...
-                    </div>
-                ) : (
-                    <NotebookBoard
-                        notebooks={notebooks}
-                        onDelete={handleDelete}
-                        deletingId={deletingId}
-                        onEdit={(notebook) => setSelectedNotebook(notebook)} // Abrimos el modal al editar
-                        onAddNote={(notebook) => setSelectedNotebook(notebook)}
-                        onUpdateSize={handleUpdateSize}
-                        onTogglePin={handleTogglePin}
-                    />
-                )}
-
-                {/* Renderizamos el Modal fuera del flujo principal del documento */}
-                <NotebookDetailModal key={selectedNotebook?.id || "empty-modal"} notebook={selectedNotebook} isOpen={!!selectedNotebook} onClose={() => setSelectedNotebook(null)} />
+                <button className="btn btn-primary d-flex align-items-center gap-1" onClick={handleQuickCreate} disabled={isCreating}>
+                    {isCreating ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : <IconPlus size={18} />}
+                    <span>{isCreating ? "Creando..." : "Nueva Libreta"}</span>
+                </button>
             </div>
+
+            {isError && (
+                <div className="alert alert-danger" role="alert">
+                    Error al sincronizar las libretas con el servidor.
+                </div>
+            )}
+
+            {isLoading ? (
+                <div className="card shadow-sm border-0 p-5 text-center text-muted">
+                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Cargando tablero de libretas...
+                </div>
+            ) : (
+                <NotebookBoard
+                    notebooks={notebooks}
+                    onDelete={handleDelete}
+                    deletingId={deletingId}
+                    onEdit={(notebook) => setSelectedNotebook(notebook)} // Abrimos el modal al editar
+                    onAddNote={(notebook) => setSelectedNotebook(notebook)}
+                    onUpdateSize={handleUpdateSize}
+                    onTogglePin={handleTogglePin}
+                />
+            )}
+
+            {/* Renderizamos el Modal fuera del flujo principal del documento */}
+            <NotebookDetailModal key={selectedNotebook?.id || "empty-modal"} notebook={selectedNotebook} isOpen={!!selectedNotebook} onClose={() => setSelectedNotebook(null)} />
         </div>
     );
 };

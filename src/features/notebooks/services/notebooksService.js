@@ -1,4 +1,5 @@
 import { apiClient } from "@/config/axios";
+import { notebookAdapter, notebooksAdapter, noteAdapter, notesAdapter } from "../adapters/notebookAdapter";
 
 export const notebooksService = {
     // ==========================================
@@ -7,18 +8,16 @@ export const notebooksService = {
 
     getAll: async () => {
         const response = await apiClient.post("/notebooks/search", {
-            params: {
-                with: {
-                    notes: {
-                        orderBy: {
-                            created_at: "desc",
-                        },
+            with: {
+                notes: {
+                    orderBy: {
+                        order: "ASC",
                     },
                 },
             },
         });
 
-        return response.data.data;
+        return notebooksAdapter(response.data.data);
     },
 
     getById: async (id) => {
@@ -28,25 +27,25 @@ export const notebooksService = {
             },
         });
 
-        return response.data.data;
+        return notebookAdapter(response.data.data);
     },
 
     create: async (payload) => {
         const response = await apiClient.post("/notebooks", payload);
 
-        return response.data.data;
+        return notebookAdapter(response.data.data);
     },
 
     update: async (id, payload) => {
         const response = await apiClient.put(`/notebooks/${id}`, payload);
 
-        return response.data.data;
+        return notebookAdapter(response.data.data);
     },
 
     delete: async (id) => {
         const response = await apiClient.delete(`/notebooks/${id}`);
 
-        return response.data.data;
+        return notebookAdapter(response.data.data);
     },
 
     // Endpoint crítico para el Drag & Drop del tablero principal
@@ -63,7 +62,7 @@ export const notebooksService = {
             is_pinned: isPinned,
         });
 
-        return response.data;
+        return notebookAdapter(response.data);
     },
 
     // ==========================================
@@ -73,19 +72,19 @@ export const notebooksService = {
     getNotes: async (id) => {
         const response = await apiClient.get(`/notebook_notes/${id}/`);
 
-        return response.data.data;
+        return noteAdapter(response.data.data);
     },
 
     createNote: async (notebookId, payload) => {
         const response = await apiClient.post(`/notebook_notes`, payload);
 
-        return response.data.data;
+        return noteAdapter(response.data.data);
     },
 
     updateNote: async (id, payload) => {
         const response = await apiClient.put(`/notebook_notes/${id}`, payload);
 
-        return response.data.data;
+        return noteAdapter(response.data.data);
     },
 
     deleteNote: async (id) => {
@@ -98,6 +97,7 @@ export const notebooksService = {
     reorderNotes: async (id, payload) => {
         // payload esperado por Laravel: [{ id: 1, order: 0 }, { id: 2, order: 1 }]
         const response = await apiClient.put(`/notebooks/${id}/notes/reorder`, { order: payload });
-        return response.data.data;
+
+        return notebooksAdapter(response.data.data);
     },
 };

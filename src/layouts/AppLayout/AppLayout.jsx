@@ -1,6 +1,8 @@
 import { Outlet } from "react-router-dom";
 import { AppNavbar } from "./AppNavbar";
 
+import "@/assets/styles/utilities.css";
+
 export const AppLayout = () => {
     return (
         <div className="page">
