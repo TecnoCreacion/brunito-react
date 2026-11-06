@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { IconPlus, IconTrash, IconDeviceFloppy } from "@tabler/icons-react";
+import { IconPlus, IconDeviceFloppy } from "@tabler/icons-react";
 import { useNotebookQuery } from "../queries/useNotebooksQuery";
-import { useUpdateNotebookMutation } from "../mutations/useUpdateNotebookMutation";
-import { useCreateNoteMutation } from "../mutations/useCreateNoteMutation";
-import { useDeleteNoteMutation } from "../mutations/useDeleteNoteMutation";
+// 🚀 ARQUITECTURA: Consumimos la capa 3 (Hooks orquestadores) en lugar de mutaciones sueltas
+import { useNotebookMutations } from "../hooks/useNotebookMutations";
+import { useNoteMutations } from "../hooks/useNoteMutations";
+import { NoteListItem } from "./NoteListItem"; // 🚀 COMPOSICIÓN: Reutilizamos el componente corporativo
 
 export const NotebookDetailModal = ({ notebook, isOpen, onClose }) => {
     // 1. Estados locales para la edición del Notebook (Padre)
@@ -15,17 +16,19 @@ export const NotebookDetailModal = ({ notebook, isOpen, onClose }) => {
     const [newNoteTitle, setNewNoteTitle] = useState("");
     const [newNoteContent, setNewNoteContent] = useState("");
 
-    // 3. Integración con TanStack Query
+    // 3. Integración con TanStack Query (Capa 3 y 4)
     const { data: notebookDetail, isLoading: isLoadingDetail } = useNotebookQuery(notebook?.id);
     const notes = notebookDetail?.notes || []; // 🛡️ Protección defensiva
 
-    const { mutate: updateNotebook, isPending: isUpdatingNotebook } = useUpdateNotebookMutation();
-    const { mutate: createNote, isPending: isCreatingNote } = useCreateNoteMutation();
-    const { mutate: deleteNote } = useDeleteNoteMutation();
+    // 🚀 Obtenemos acciones limpias desde los Hooks de Feature
+    const { updateNotebook, isUpdating } = useNotebookMutations();
+    const { createNote, isCreatingNote, updateNote, deleteNote } = useNoteMutations();
 
     if (!isOpen || !notebook) return null;
 
-    // Handlers
+    // ==========================================
+    // HANDLERS (Delegación a Capa 4)
+    // ==========================================
     const handleSaveNotebook = () => {
         updateNotebook({
             id: notebook.id,
@@ -33,35 +36,57 @@ export const NotebookDetailModal = ({ notebook, isOpen, onClose }) => {
         });
     };
 
-    const handleAddNote = (e) => {
+    const handleAddNote = async (e) => {
         e.preventDefault();
-
         if (!newNoteContent.trim() && !newNoteTitle.trim()) return;
 
-        createNote(
-            {
+        try {
+            await createNote({
                 notebookId: notebook.id,
                 payload: {
                     notebook_id: notebook.id,
                     title: newNoteTitle,
                     content: newNoteContent,
                 },
-            },
-            {
-                onSuccess: () => {
-                    // Limpiamos y cerramos el formulario al tener éxito
-                    setNewNoteTitle("");
-                    setNewNoteContent("");
-                    setIsAddingNote(false);
-                },
-            },
-        );
+            });
+            // Limpiamos y cerramos el formulario al tener éxito
+            setNewNoteTitle("");
+            setNewNoteContent("");
+            setIsAddingNote(false);
+        } catch (error) {
+            console.error("Error al crear la nota", error);
+        }
     };
 
     const handleCancelAddNote = () => {
         setNewNoteTitle("");
         setNewNoteContent("");
         setIsAddingNote(false);
+    };
+
+    // 🚀 LÓGICA DE NEGOCIO VISUAL: Devuelve Promise para que NoteListItem controle sus Spinners
+    const handleEditNote = async (updatedNote) => {
+        try {
+            await updateNote({
+                notebookId: notebook.id,
+                noteId: updatedNote.id,
+                payload: { title: updatedNote.title, content: updatedNote.content },
+            });
+            return true;
+        } catch (error) {
+            console.error("Error al actualizar la nota", error);
+            return false;
+        }
+    };
+
+    const handleDeleteNote = async (noteToDelete) => {
+        try {
+            await deleteNote({ notebookId: notebook.id, noteId: noteToDelete.id });
+            return true;
+        } catch (error) {
+            console.error("Error al eliminar la nota", error);
+            return false;
+        }
     };
 
     return (
@@ -74,10 +99,9 @@ export const NotebookDetailModal = ({ notebook, isOpen, onClose }) => {
                         {/* Cabecera */}
                         <div className="modal-header bg-light">
                             <h5 className="modal-title font-weight-bold d-flex align-items-center gap-2">
-                                <span className={`badge bg-${notebook.color_theme === "white-blank" ? "secondary" : "warning"}`}>{notebook.size?.toUpperCase()}</span>
+                                <span className={`badge bg-${notebook.colorTheme === "white-blank" ? "secondary" : "warning"}`}>{notebook.size?.toUpperCase()}</span>
                                 Detalles de la Libreta
                             </h5>
-
                             <button type="button" className="btn-close" onClick={onClose} aria-label="Cerrar"></button>
                         </div>
 
@@ -96,9 +120,9 @@ export const NotebookDetailModal = ({ notebook, isOpen, onClose }) => {
                                         <label className="form-label">Descripción</label>
                                         <textarea className="form-control" rows="4" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Añade un contexto a esta libreta..."></textarea>
                                     </div>
-                                    <button className="btn btn-primary w-100 d-flex justify-content-center align-items-center gap-2" onClick={handleSaveNotebook} disabled={isUpdatingNotebook}>
-                                        {isUpdatingNotebook ? <span className="spinner-border spinner-border-sm" role="status"></span> : <IconDeviceFloppy size={18} />}
-                                        {isUpdatingNotebook ? "Guardando..." : "Guardar Cambios"}
+                                    <button className="btn btn-primary w-100 d-flex justify-content-center align-items-center gap-2" onClick={handleSaveNotebook} disabled={isUpdating}>
+                                        {isUpdating ? <span className="spinner-border spinner-border-sm" role="status"></span> : <IconDeviceFloppy size={18} />}
+                                        {isUpdating ? "Guardando..." : "Guardar Cambios"}
                                     </button>
                                 </div>
 
@@ -108,7 +132,7 @@ export const NotebookDetailModal = ({ notebook, isOpen, onClose }) => {
                                         Notas ({notes.length})
                                     </h4>
 
-                                    {/* 🚀 FORMULARIO AMIGABLE (CARD) PARA NUEVA NOTA */}
+                                    {/* 🚀 FORMULARIO AMIGABLE PARA NUEVA NOTA (Capa 10: Formularios)[cite: 7] */}
                                     {!isAddingNote ? (
                                         <button className="btn btn-outline-primary w-100 mb-3 border-dashed d-flex justify-content-center align-items-center gap-2 py-3" onClick={() => setIsAddingNote(true)}>
                                             <IconPlus size={20} stroke={2} />
@@ -118,7 +142,7 @@ export const NotebookDetailModal = ({ notebook, isOpen, onClose }) => {
                                         <div className="card shadow-sm border-primary mb-3">
                                             <div className="card-body p-3">
                                                 <input type="text" className="form-control fw-bold border-0 px-1 mb-2 fs-5" placeholder="Título de la nota..." value={newNoteTitle} onChange={(e) => setNewNoteTitle(e.target.value)} disabled={isCreatingNote} autoFocus />
-                                                <textarea className="form-control border-0 px-1 text-muted" rows="3" placeholder="Escribe los detalles aquí..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} disabled={isCreatingNote} style={{ resize: "none" }}></textarea>
+                                                <textarea className="form-control border-0 px-1 text-muted hide-scrollbar" rows="3" placeholder="Escribe los detalles aquí..." value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} disabled={isCreatingNote} style={{ resize: "none" }}></textarea>
                                             </div>
                                             <div className="card-footer bg-transparent border-top-0 d-flex justify-content-end gap-2 pt-0 pb-3 px-3">
                                                 <button className="btn btn-ghost-secondary btn-sm" onClick={handleCancelAddNote} disabled={isCreatingNote}>
@@ -132,7 +156,7 @@ export const NotebookDetailModal = ({ notebook, isOpen, onClose }) => {
                                         </div>
                                     )}
 
-                                    {/* Listado de Notas Renderizadas como Cards */}
+                                    {/* 🚀 REUTILIZACIÓN (Capa 9): Listado de Notas Renderizadas con nuestro Componente Corporativo[cite: 7] */}
                                     <div className="d-flex flex-column gap-2" style={{ overflowY: "auto", flexGrow: 1, paddingRight: "5px" }}>
                                         {isLoadingDetail ? (
                                             <div className="p-5 text-center text-muted">
@@ -142,20 +166,17 @@ export const NotebookDetailModal = ({ notebook, isOpen, onClose }) => {
                                         ) : notes.length === 0 && !isAddingNote ? (
                                             <div className="p-5 text-center text-muted border rounded border-dashed">Esta libreta está vacía. ¡Agrega tu primera nota!</div>
                                         ) : (
-                                            notes.map((note) => (
-                                                <div key={note.id} className="card shadow-none border">
-                                                    <div className="card-body p-3 d-flex justify-content-between align-items-start">
-                                                        <div>
-                                                            {note.title && <h6 className="card-title mb-1">{note.title}</h6>}
-                                                            <p className="card-text small text-muted mb-0" style={{ whiteSpace: "pre-wrap" }}>
-                                                                {note.content}
-                                                            </p>
-                                                        </div>
-                                                        <button className="btn btn-sm btn-icon btn-ghost-danger ms-2 flex-shrink-0" onClick={() => deleteNote({ notebookId: notebook.id, noteId: note.id })} title="Eliminar nota">
-                                                            <IconTrash size={16} />
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                            notes.map((note, index) => (
+                                                <NoteListItem
+                                                    key={note.id}
+                                                    note={note}
+                                                    isFirst={index === 0}
+                                                    isLast={index === notes.length - 1}
+                                                    disabled={isCreatingNote} // Se opacan si se está creando una nueva por encima
+                                                    onEdit={handleEditNote} // 🚀 El componente maneja internamente sus botones y spinners
+                                                    onDelete={handleDeleteNote}
+                                                    // Opcional: onMoveUp / onMoveDown si en el modal permites reordenar.
+                                                />
                                             ))
                                         )}
                                     </div>

@@ -8,10 +8,8 @@ export const NotebookMobileCarousel = (props) => {
 
     // 🚀 LÓGICA VISUAL: Garantizamos que la fijada sea siempre el índice 0
     const sortedNotebooks = useMemo(() => {
-        // ⚠️ ADVERTENCIA ARQUITECTÓNICA: is_pinned es deuda técnica.
-        // Recuerda mapearlo a camelCase (isPinned) en la Capa 5 (Adapter) a futuro.
-        const pinned = notebooks.find((n) => n.is_pinned);
-        const unpinned = notebooks.filter((n) => !n.is_pinned);
+        const pinned = notebooks.find((n) => n.isPinned);
+        const unpinned = notebooks.filter((n) => !n.isPinned);
         return pinned ? [pinned, ...unpinned] : unpinned;
     }, [notebooks]);
 

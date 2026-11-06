@@ -60,14 +60,14 @@ export const NotebookDesktopGrid = (props) => {
 
             const deltaX = e.clientX - dragState.startX;
             let stepChange = Math.round(deltaX / DRAG_THRESHOLD);
+
             if (dragState.direction === "left") stepChange = -stepChange;
 
             let newSizeIndex = dragState.startSizeIndex + stepChange;
 
-            // Buscamos la libreta activa para determinar límites
             const activeNotebook = notebooks.find((n) => n.id === dragState.notebookId);
-            // ⚠️ ADVERTENCIA ARQUITECTÓNICA: is_pinned debe ser mapeado a isPinned mediante un Adapter
-            const maxIndex = activeNotebook?.is_pinned ? SIZES.indexOf("md") : SIZES.length - 1;
+            const isPinned = activeNotebook?.isPinned ?? activeNotebook?.is_pinned;
+            const maxIndex = isPinned ? SIZES.indexOf("md") : SIZES.length - 1;
 
             newSizeIndex = Math.max(0, Math.min(newSizeIndex, maxIndex));
 
@@ -107,8 +107,8 @@ export const NotebookDesktopGrid = (props) => {
     }, [dragState.isDragging, handleDragMove, handleDragEnd]);
 
     // Separar libretas
-    const pinnedNotebook = notebooks.find((n) => n.is_pinned);
-    const unpinnedNotebooks = notebooks.filter((n) => !n.is_pinned);
+    const pinnedNotebook = notebooks.find((n) => n.isPinned);
+    const unpinnedNotebooks = notebooks.filter((n) => !n.isPinned);
 
     // 🚀 LÓGICA DE COMPOSICIÓN: Inyectamos props de drag a la tarjeta reutilizable
     const renderDraggableCard = (notebook) => {
@@ -124,7 +124,7 @@ export const NotebookDesktopGrid = (props) => {
             onDragStart: handleDragStart,
         };
 
-        if (notebook.is_pinned) {
+        if (notebook.isPinned) {
             return <NotebookCard {...cardProps} />;
         }
 

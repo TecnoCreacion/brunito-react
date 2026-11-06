@@ -1,3 +1,5 @@
+import { noteAdapter } from "./noteAdapter";
+
 export const notebookAdapter = (rawNotebook) => {
     return {
         id: rawNotebook.id,
@@ -16,18 +18,4 @@ export const notebookAdapter = (rawNotebook) => {
 
 export const notebooksAdapter = (rawNotebooks = []) => {
     return rawNotebooks.map(notebookAdapter);
-};
-
-export const noteAdapter = (note) => ({
-    id: note.id,
-    user: note.user_id,
-    title: note.title || "",
-    content: note.content || note.description || "",
-    order: note.order || 0,
-    status: Boolean(note.status),
-    createdAt: note.created_at,
-});
-
-export const notesAdapter = (notes) => {
-    return notes.map(noteAdapter);
 };

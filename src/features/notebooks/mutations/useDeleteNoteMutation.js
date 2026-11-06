@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { notebooksService } from "../services/notebooksService";
+import { notesService } from "../services/notesService";
 import { notebooksKeys } from "../keys/notebooksKeys";
 
 export const useDeleteNoteMutation = () => {
@@ -7,7 +7,7 @@ export const useDeleteNoteMutation = () => {
 
     return useMutation({
         // 1. Recibimos ambos IDs del componente, pero SOLO enviamos noteId a Laravel
-        mutationFn: ({ noteId }) => notebooksService.deleteNote(noteId),
+        mutationFn: ({ noteId }) => notesService.deleteNote(noteId),
 
         // 🚀 ACTUALIZACIÓN OPTIMISTA
         onMutate: async ({ notebookId, noteId }) => {
@@ -36,7 +36,10 @@ export const useDeleteNoteMutation = () => {
 
         // Re-sincronizamos con el servidor de forma silenciosa, refrescando solo esta libreta
         onSettled: (_, __, { notebookId }) => {
-            queryClient.invalidateQueries({ queryKey: notebooksKeys.notes(notebookId) });
+            queryClient.invalidateQueries({ queryKey: notebooksKeys.detail(notebookId) });
+
+            queryClient.invalidateQueries({ queryKey: notebooksKeys.lists() });
+            //queryClient.invalidateQueries({ queryKey: notebooksKeys.notes(notebookId) });
         },
     });
 };

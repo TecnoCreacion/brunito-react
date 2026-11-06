@@ -4,7 +4,7 @@ import { Tooltip } from "@/shared/components/Tooltip/Tooltip";
 import { NoteListItem } from "./NoteListItem";
 import { alerts } from "@/shared/utils/alerts"; // 🚀 Importación del helper corporativo[cite: 1]
 
-export const NotebookCard = ({ notebook, isBeingDragged = false, dragDirection = null, onDragStart, deletingId = null, canPinMore = true, onTogglePin, onEdit, onDelete, onAddNote, onEditNote, onReorderNote, isMobileLayout = false }) => {
+export const NotebookCard = ({ notebook, isBeingDragged = false, dragDirection = null, onDragStart, deletingId = null, canPinMore = true, onTogglePin, onEdit, onDelete, onAddNote, onEditNote, onDeleteNote, onReorderNote, isMobileLayout = false }) => {
     // 🚀 ADAPTER (Deuda Técnica temporal)[cite: 1]
     const isPinned = notebook.isPinned !== undefined ? notebook.isPinned : notebook.is_pinned;
     const colorTheme = notebook.colorTheme || notebook.color_theme;
@@ -141,7 +141,20 @@ export const NotebookCard = ({ notebook, isBeingDragged = false, dragDirection =
                                     isLast={index === visibleNotes.length - 1}
                                     disabled={isThisDeleting || isBeingDragged}
                                     // 🚀 COMPOSICIÓN: Ahora enviamos todo el objeto editado de vuelta al hook de la página
-                                    onEdit={(updatedNote) => onEditNote && onEditNote(notebook.id, updatedNote)}
+                                    onEdit={async (updatedNote) => {
+                                        if (onEditNote) {
+                                            return await onEditNote(notebook.id, updatedNote);
+                                        }
+
+                                        return true;
+                                    }}
+                                    onDelete={async (noteToDelete) => {
+                                        if (onDeleteNote) {
+                                            return await onDeleteNote(notebook.id, noteToDelete.id);
+                                        }
+
+                                        return true;
+                                    }}
                                     onMoveUp={(n) => onReorderNote && onReorderNote(notebook.id, n, "up")}
                                     onMoveDown={(n) => onReorderNote && onReorderNote(notebook.id, n, "down")}
                                 />

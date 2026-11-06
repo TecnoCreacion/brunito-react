@@ -1,15 +1,17 @@
 import { useNotebooksQuery } from "../queries/useNotebooksQuery";
 import { useReorderNotebooksMutation } from "../mutations/useReorderNotebooksMutation";
 import { useCreateNotebookMutation } from "../mutations/useCreateNotebookMutation";
+import { useUpdateNotebookMutation } from "../mutations/useUpdateNotebookMutation";
 import { useDeleteNotebookMutation } from "../mutations/useDeleteNotebookMutation";
 
-export const useNotebooksBoard = () => {
+export const useNotebookMutations = () => {
     // 1. Obtenemos los datos remotos mediante TanStack Query
     const { data: notebooks = [], isLoading, isError } = useNotebooksQuery();
 
     // 2. Extraemos las mutaciones necesarias para el dominio
     const { mutate: reorderNotebooks } = useReorderNotebooksMutation();
     const { mutateAsync: createNotebook, isPending: isCreating } = useCreateNotebookMutation();
+    const { mutateAsync: updateNotebook, isPending: isUpdating } = useUpdateNotebookMutation();
     const { mutate: deleteNotebook } = useDeleteNotebookMutation();
 
     // 3. Función de negocio para manejar el reordenamiento visual (Drag & Drop)
@@ -27,7 +29,9 @@ export const useNotebooksBoard = () => {
         isLoading,
         isError,
         isCreating,
+        isUpdating,
         createNotebook,
+        updateNotebook,
         deleteNotebook,
         handleReorder,
     };

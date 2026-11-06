@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
-import { useNotebooksBoard } from "../hooks/useNotebooksBoard";
+import { useNotebookMutations } from "../hooks/useNotebookMutations";
+import { useNoteMutations } from "../hooks/useNoteMutations";
 import { NotebookBoard } from "../components/NotebookBoard";
 import { NotebookDetailModal } from "../components/NotebookDetailModal";
 import { IconPlus } from "@tabler/icons-react";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { alerts } from "@/shared/utils/alerts";
-import { useUpdateNotebookMutation } from "../mutations/useUpdateNotebookMutation";
 import { useTogglePinMutation } from "../mutations/useTogglePinMutation";
 
 export const NotebooksPage = () => {
@@ -15,10 +15,10 @@ export const NotebooksPage = () => {
     const { user } = useAuth();
 
     // 1. Extraemos isCreating directamente del Hook (alimentado por TanStack Query)
-    const { notebooks, isLoading, isError, createNotebook, deleteNotebook, isCreating } = useNotebooksBoard();
+    const { notebooks, isLoading, isError, createNotebook, deleteNotebook, updateNotebook, isCreating } = useNotebookMutations();
+    const { updateNote, deleteNote } = useNoteMutations();
 
     // Extraemos la función mutate desde nuestra mutación de TanStack Query (Capa 4)
-    const { mutate: updateNotebook } = useUpdateNotebookMutation();
     const { mutate: togglePinNotebook } = useTogglePinMutation();
 
     // 2. Estado local estrictamente visual para saber qué ID está girando (eliminándose)
@@ -48,6 +48,7 @@ export const NotebooksPage = () => {
 
         // 3. Si confirmó, procedemos con el flujo de carga y eliminación
         setDeletingId(id);
+
         try {
             await deleteNotebook(id);
         } catch (error) {
@@ -66,6 +67,35 @@ export const NotebooksPage = () => {
 
     const handleTogglePin = (id, isPinned) => {
         togglePinNotebook({ id, isPinned });
+    };
+
+    const handleEditNote = async (notebookId, updatedNote) => {
+        try {
+            await updateNote({
+                notebookId,
+                noteId: updatedNote.id,
+                payload: { title: updatedNote.title, content: updatedNote.content },
+            });
+
+            return true; // Éxito: el componente puede cerrar el input
+        } catch (error) {
+            console.error("Error al actualizar la nota", error);
+
+            return false; // Error: el componente debe mantener el input abierto
+        }
+    };
+
+    const handleDeleteNote = async (notebookId, noteId) => {
+        try {
+            // Asumiendo que tu hook useNoteMutations expone 'deleteNote'
+            await deleteNote({ notebookId, noteId });
+
+            return true;
+        } catch (error) {
+            console.error("Error al eliminar la nota", error);
+
+            return false;
+        }
     };
 
     return (
@@ -102,11 +132,13 @@ export const NotebooksPage = () => {
                     onAddNote={(notebook) => setSelectedNotebook(notebook)}
                     onUpdateSize={handleUpdateSize}
                     onTogglePin={handleTogglePin}
+                    onEditNote={handleEditNote}
+                    onDeleteNote={handleDeleteNote}
                 />
             )}
 
             {/* Renderizamos el Modal fuera del flujo principal del documento */}
-            <NotebookDetailModal key={selectedNotebook?.id || "empty-modal"} notebook={selectedNotebook} isOpen={!!selectedNotebook} onClose={() => setSelectedNotebook(null)} />
+            <NotebookDetailModal key={selectedNotebook?.id || "empty-modal"} notebook={selectedNotebook} isOpen={!!selectedNotebook} onClose={() => setSelectedNotebook(null)} onEditNote={handleEditNote} onDeleteNote={handleDeleteNote} />
         </div>
     );
 };
