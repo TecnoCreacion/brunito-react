@@ -24,7 +24,7 @@ export const notesService = {
     },
 
     deleteNote: async (id) => {
-        const response = await apiClient.delete(`/notebook_notes/${id}/`);
+        const response = await apiClient.delete(`/notebook_notes/${id}`);
 
         return response.data.data;
     },
