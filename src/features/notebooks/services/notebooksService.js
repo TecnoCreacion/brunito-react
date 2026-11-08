@@ -33,7 +33,7 @@ export const notebooksService = {
     },
 
     update: async (id, payload) => {
-        const response = await apiClient.put(`/notebooks/${id}/edit`, payload);
+        const response = await apiClient.put(`/notebooks/${id}`, payload);
 
         return notebookAdapter(response.data.data);
     },
