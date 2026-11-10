@@ -2,12 +2,20 @@ import React, { useMemo, useEffect } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment/min/moment-with-locales";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { IconClock } from "@tabler/icons-react";
 
 const localizer = momentLocalizer(moment);
 
-export const BigCalendarView = ({ events = [], resources = [], controls = {}, onEventClick, onDateSelect, onWeekClick }) => {
+export const BigCalendarView = ({
+    events = [],
+    resources = [],
+    controls = {},
+    selectedTags = [], // Recibimos los tags activos para la UI
+    onEventClick,
+    onDateSelect,
+    onWeekClick,
+}) => {
     const { currentDate = new Date(), currentView = "month", changeDate = () => {}, changeView = () => {}, currentLocale = "es" } = controls;
-
     const normalizedLocale = String(currentLocale).toLowerCase();
 
     useEffect(() => {
@@ -33,6 +41,47 @@ export const BigCalendarView = ({ events = [], resources = [], controls = {}, on
                         </span>
                     </div>
                 ),
+            },
+            // 🚀 ARQUITECTURA VISUAL: Renderizado personalizado del evento interno
+            event: ({ event }) => {
+                const startTime = moment(event.start).format("HH:mm");
+                const endTime = moment(event.end).format("HH:mm");
+                const hasActiveFilters = selectedTags.length > 0;
+
+                return (
+                    <div className="d-flex flex-column h-100 p-1 overflow-hidden" style={{ lineHeight: "1.2" }}>
+                        {/* Título */}
+                        <div className="fw-bold text-truncate" style={{ fontSize: "0.85rem" }}>
+                            {event.title}
+                        </div>
+
+                        {/* Rango de Hora */}
+                        <div className="text-truncate opacity-75 mb-1 d-flex align-items-center gap-1 mt-1" style={{ fontSize: "0.7rem" }}>
+                            <IconClock size={12} />
+                            <span>
+                                {startTime} - {endTime}
+                            </span>
+                        </div>
+
+                        {/* Etiquetas (Tags) */}
+                        {event.tags && event.tags.length > 0 && (
+                            <div className="d-flex flex-wrap gap-1 mt-auto pt-1">
+                                {event.tags.map((tag) => {
+                                    const isHighlighted = hasActiveFilters ? selectedTags.includes(tag.id) : true;
+
+                                    // 🚀 DESIGN SYSTEM: Contraste inteligente sobre el fondo de color del evento
+                                    const badgeClasses = isHighlighted ? `bg-white text-${tag.color || "primary"} shadow-sm` : `bg-transparent border border-white text-white opacity-50`;
+
+                                    return (
+                                        <span key={tag.id} className={`badge ${badgeClasses}`} style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem" }} title={tag.name}>
+                                            {tag.name}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                );
             },
             dateCellWrapper: (props) => {
                 const isMonday = moment(props.value).isoWeekday() === 1;
@@ -73,7 +122,7 @@ export const BigCalendarView = ({ events = [], resources = [], controls = {}, on
                 ]);
             },
         }),
-        [onWeekClick],
+        [onWeekClick, selectedTags],
     );
 
     return (
