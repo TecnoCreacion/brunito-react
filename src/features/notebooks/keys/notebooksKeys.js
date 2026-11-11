@@ -1,7 +1,7 @@
 export const notebooksKeys = {
     all: ["notebooks"],
     lists: () => [...notebooksKeys.all, "list"],
-    list: (filters) => [...notebooksKeys.lists(), { filters }],
+    list: (filters) => [...notebooksKeys.lists(), filters],
     details: () => [...notebooksKeys.all, "detail"],
     detail: (id) => [...notebooksKeys.details(), id],
 

@@ -2,19 +2,35 @@ import { useState } from "react";
 import { IconPaperclip, IconTrash, IconEdit, IconPlus, IconPin, IconPinFilled, IconSearch, IconChevronDown, IconChevronUp, IconX } from "@tabler/icons-react";
 import { Tooltip } from "@/shared/components/Tooltip/Tooltip";
 import { NoteListItem } from "./NoteListItem";
-import { alerts } from "@/shared/utils/alerts"; // 🚀 Importación del helper corporativo[cite: 1]
+import { alerts } from "@/shared/utils/alerts";
+
+// Helper local defensivo para formatear fechas de creación
+const formatDate = (dateString) => {
+    if (!dateString) return "";
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("es-CL", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+    } catch {
+        return dateString;
+    }
+};
 
 export const NotebookCard = ({ notebook, isBeingDragged = false, dragDirection = null, onDragStart, deletingId = null, canPinMore = true, onTogglePin, onEdit, onDelete, onAddNote, onEditNote, onDeleteNote, onReorderNote, isMobileLayout = false }) => {
-    // 🚀 ADAPTER (Deuda Técnica temporal)[cite: 1]
+    // 🚀 ADAPTER: Normalización defensiva de datos (snake_case vs camelCase)
     const isPinned = notebook.isPinned !== undefined ? notebook.isPinned : notebook.is_pinned;
     const colorTheme = notebook.colorTheme || notebook.color_theme;
+    const createdAt = notebook.createdAt || notebook.created_at;
+    const authorName = notebook.user?.name || notebook.userName || notebook.user_name || "Usuario";
 
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpanded, setIsExpanded] = useState(false);
 
     const isThisDeleting = deletingId === notebook.id;
     const notebookNotes = notebook.notes || [];
-
     const isSearching = searchTerm.trim().length > 0;
 
     const filteredNotes = notebookNotes.filter((note) => {
@@ -39,7 +55,7 @@ export const NotebookCard = ({ notebook, isBeingDragged = false, dragDirection =
         }
     };
 
-    // 🚀 LÓGICA DE NEGOCIO VISUAL: Interceptamos el clic para confirmar ANTES de desfijar[cite: 1]
+    // 🚀 INTERCEPCIÓN VISUAL: Confirmación antes de desfijar
     const handleTogglePinClick = async () => {
         if (isPinned) {
             const isConfirmed = await alerts.confirmDelete("¿Desfijar libreta?", "La libreta volverá a su tamaño normal en el tablero y dejará de ser la principal.");
@@ -58,34 +74,68 @@ export const NotebookCard = ({ notebook, isBeingDragged = false, dragDirection =
                 zIndex: isBeingDragged ? 100 : isPinned ? 50 : 1,
             }}
         >
-            {/* ... BORDES DE RESIZE Y ICONO SUPERIOR (Igual que en la iteración anterior) ... */}
-            {!isMobileLayout && onDragStart && (
+            {/* 🚀 BLOQUEO DE REORDENAMIENTO: Deshabilitado el resize lateral si la libreta está fijada */}
+            {!isMobileLayout && onDragStart && !isPinned && (
                 <div
                     className="position-absolute top-0 end-0 h-100 transition-base"
-                    style={{ width: "8px", cursor: "ew-resize", zIndex: 10, backgroundColor: isBeingDragged && dragDirection === "right" ? "var(--bs-primary)" : "transparent", borderTopRightRadius: "4px", borderBottomRightRadius: "4px" }}
+                    style={{
+                        width: "8px",
+                        cursor: "ew-resize",
+                        zIndex: 10,
+                        backgroundColor: isBeingDragged && dragDirection === "right" ? "var(--bs-primary)" : "transparent",
+                        borderTopRightRadius: "4px",
+                        borderBottomRightRadius: "4px",
+                    }}
                     onMouseDown={(e) => onDragStart(e, notebook, "right")}
                     onMouseEnter={(e) => (e.target.style.backgroundColor = "rgba(13, 110, 253, 0.5)")}
                     onMouseLeave={(e) => {
                         if (!(isBeingDragged && dragDirection === "right")) e.target.style.backgroundColor = "transparent";
                     }}
-                    title={`Arrastrar para ajustar ancho ${isPinned ? "(Máx 50%)" : ""}`}
+                    title="Arrastrar para ajustar ancho"
                 />
             )}
 
+            {/* 🚀 BLOQUEO DE ARRASTRE: Si está fijada (isPinned), bloquea el evento onMouseDown */}
             {!isMobileLayout && (
-                <div className="position-absolute top-0 start-50 translate-middle-x px-3" style={{ marginTop: "-12px", color: "#6c757d", cursor: isPinned ? "default" : "grab", zIndex: 5 }} title={isPinned ? "Libreta fijada" : "Arrastrar libreta"}>
+                <div
+                    className="position-absolute top-0 start-50 translate-middle-x px-3"
+                    style={{
+                        marginTop: "-12px",
+                        color: "#6c757d",
+                        cursor: isPinned ? "not-allowed" : "grab",
+                        zIndex: 5,
+                    }}
+                    title={isPinned ? "Libreta fijada (No se puede mover)" : "Arrastrar libreta"}
+                    onMouseDown={(e) => {
+                        if (isPinned) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return;
+                        }
+                        if (onDragStart) onDragStart(e, notebook, "header");
+                    }}
+                >
                     {isPinned ? <IconPinFilled size={24} className="text-primary" /> : <IconPaperclip size={24} className="transform-rotate-45 text-secondary opacity-75" />}
                 </div>
             )}
 
             <div className="card-body d-flex flex-column pt-2 p-0 mt-1 h-100 overflow-hidden">
                 <div className="d-flex justify-content-between align-items-start mb-2 flex-shrink-0">
-                    <h3 className="card-title h5 font-weight-bold text-truncate mb-0" style={{ maxWidth: "60%" }}>
-                        {notebook.title || "Sin título"}
-                    </h3>
+                    <div className="overflow-hidden me-2" style={{ maxWidth: "70%" }}>
+                        <h3 className="card-title h5 font-weight-bold text-truncate mb-0">{notebook.title || "Sin título"}</h3>
+                        {/* 🚀 SUBTÍTULOS DE CABECERA: Nombre de usuario y fecha de creación */}
+                        <div className="text-muted small fs-6 opacity-75 mt-1 d-flex align-items-center gap-1 text-truncate">
+                            <span className="fw-medium text-truncate">{authorName}</span>
+                            {createdAt && (
+                                <>
+                                    <span>•</span>
+                                    <span>{formatDate(createdAt)}</span>
+                                </>
+                            )}
+                        </div>
+                    </div>
 
-                    <div className="d-flex gap-1 position-relative" style={{ zIndex: 15 }}>
-                        {/* 🚀 COMPOSICIÓN: Inyectamos nuestra función con confirmación */}
+                    <div className="d-flex gap-1 position-relative flex-shrink-0" style={{ zIndex: 15 }}>
                         <Tooltip content={isPinned ? "Desfijar libreta" : canPinMore ? "Fijar a la izquierda (Máx 1)" : "Solo puedes fijar una libreta"} position="top">
                             <button className={`btn btn-sm btn-icon ${isPinned ? "btn-primary" : "btn-ghost-secondary"}`} onClick={handleTogglePinClick} disabled={isThisDeleting || isBeingDragged || (!isPinned && !canPinMore)}>
                                 {isPinned ? <IconPinFilled size={16} /> : <IconPin size={16} />}
@@ -140,19 +190,16 @@ export const NotebookCard = ({ notebook, isBeingDragged = false, dragDirection =
                                     isFirst={index === 0}
                                     isLast={index === visibleNotes.length - 1}
                                     disabled={isThisDeleting || isBeingDragged}
-                                    // 🚀 COMPOSICIÓN: Ahora enviamos todo el objeto editado de vuelta al hook de la página
                                     onEdit={async (updatedNote) => {
                                         if (onEditNote) {
                                             return await onEditNote(notebook.id, updatedNote);
                                         }
-
                                         return true;
                                     }}
                                     onDelete={async (noteToDelete) => {
                                         if (onDeleteNote) {
                                             return await onDeleteNote(notebook.id, noteToDelete.id);
                                         }
-
                                         return true;
                                     }}
                                     onMoveUp={(n) => onReorderNote && onReorderNote(notebook.id, n, "up")}

@@ -1,58 +1,53 @@
 import { useState } from "react";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
-import { useNotebookMutations } from "../hooks/useNotebookMutations";
+import { useNotebookMutations } from "../hooks/useNotebookMutations"; // 🚀 ARQUITECTURA: Hook Orquestador (Capa 3)[cite: 7]
 import { useNoteMutations } from "../hooks/useNoteMutations";
 import { NotebookBoard } from "../components/NotebookBoard";
 import { NotebookDetailModal } from "../components/NotebookDetailModal";
 import { IconPlus } from "@tabler/icons-react";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { alerts } from "@/shared/utils/alerts";
-import { useTogglePinMutation } from "../mutations/useTogglePinMutation";
 
 export const NotebooksPage = () => {
     useDocumentTitle("Libretas y Notas");
 
     const { user } = useAuth();
 
-    // 1. Extraemos isCreating directamente del Hook (alimentado por TanStack Query)
-    const { notebooks, isLoading, isError, createNotebook, deleteNotebook, updateNotebook, isCreating } = useNotebookMutations();
+    // 🚀 ARQUITECTURA: Único punto de contacto con el dominio Notebooks (Capa 3)[cite: 7]
+    const { notebooks, isLoading, isError, createNotebook, deleteNotebook, updateNotebook, togglePin, isCreating } = useNotebookMutations({ with: "user", where: { user_id: user.id } });
+
+    // Acciones del subdominio de Notas
     const { updateNote, deleteNote } = useNoteMutations();
 
-    // Extraemos la función mutate desde nuestra mutación de TanStack Query (Capa 4)
-    const { mutate: togglePinNotebook } = useTogglePinMutation();
-
-    // 2. Estado local estrictamente visual para saber qué ID está girando (eliminándose)
+    // 🚀 ESTADO LOCAL: Exclusivamente para feedback visual del DOM (Capa 1)[cite: 7]
     const [deletingId, setDeletingId] = useState(null);
-    const [selectedNotebook, setSelectedNotebook] = useState(null); // Estado para el modal
+    const [selectedNotebook, setSelectedNotebook] = useState(null);
 
     const handleQuickCreate = async () => {
         try {
+            // 🚀 ARQUITECTURA: Frontend opera en camelCase. El Adapter/Service traduce a Laravel[cite: 7]
             await createNotebook({
-                user_id: user.id,
                 title: "Nueva Libreta Adhesiva",
                 description: "Escribe tus notas aquí...",
                 color_theme: "yellow-lined",
                 size: "md",
             });
         } catch (error) {
-            console.error("Error al crear la libreta", error);
+            console.log(error);
         }
     };
 
     const handleDelete = async (id) => {
-        // 1. Detenemos la ejecución y pedimos confirmación al usuario
         const isConfirmed = await alerts.confirmDelete("¿Eliminar esta libreta?", "Se perderán todas las notas contenidas en ella. Esta acción es irreversible.");
 
-        // 2. Si el usuario canceló (cerró el modal o presionó cancelar), abortamos la función
         if (!isConfirmed) return;
 
-        // 3. Si confirmó, procedemos con el flujo de carga y eliminación
         setDeletingId(id);
 
         try {
             await deleteNotebook(id);
         } catch (error) {
-            console.error("Error al eliminar la libreta", error);
+            console.log(error);
         } finally {
             setDeletingId(null);
         }
@@ -61,12 +56,13 @@ export const NotebooksPage = () => {
     const handleUpdateSize = (notebookId, newData) => {
         updateNotebook({
             id: notebookId,
-            data: newData, // Ej: { size: 'lg' }
+            data: newData,
         });
     };
 
     const handleTogglePin = (id, isPinned) => {
-        togglePinNotebook({ id, isPinned });
+        // 🚀 Delegado al manejador unificado del Hook Orquestador[cite: 7]
+        togglePin({ id, isPinned });
     };
 
     const handleEditNote = async (notebookId, updatedNote) => {
@@ -76,23 +72,20 @@ export const NotebooksPage = () => {
                 noteId: updatedNote.id,
                 payload: { title: updatedNote.title, content: updatedNote.content },
             });
-
-            return true; // Éxito: el componente puede cerrar el input
+            return true;
         } catch (error) {
-            console.error("Error al actualizar la nota", error);
+            console.log(error);
 
-            return false; // Error: el componente debe mantener el input abierto
+            return false;
         }
     };
 
     const handleDeleteNote = async (notebookId, noteId) => {
         try {
-            // Asumiendo que tu hook useNoteMutations expone 'deleteNote'
             await deleteNote({ notebookId, noteId });
-
             return true;
         } catch (error) {
-            console.error("Error al eliminar la nota", error);
+            console.log(error);
 
             return false;
         }
@@ -124,20 +117,9 @@ export const NotebooksPage = () => {
                     Cargando tablero de libretas...
                 </div>
             ) : (
-                <NotebookBoard
-                    notebooks={notebooks}
-                    onDelete={handleDelete}
-                    deletingId={deletingId}
-                    onEdit={(notebook) => setSelectedNotebook(notebook)} // Abrimos el modal al editar
-                    onAddNote={(notebook) => setSelectedNotebook(notebook)}
-                    onUpdateSize={handleUpdateSize}
-                    onTogglePin={handleTogglePin}
-                    onEditNote={handleEditNote}
-                    onDeleteNote={handleDeleteNote}
-                />
+                <NotebookBoard notebooks={notebooks} onDelete={handleDelete} deletingId={deletingId} onEdit={(notebook) => setSelectedNotebook(notebook)} onAddNote={(notebook) => setSelectedNotebook(notebook)} onUpdateSize={handleUpdateSize} onTogglePin={handleTogglePin} onEditNote={handleEditNote} onDeleteNote={handleDeleteNote} />
             )}
 
-            {/* Renderizamos el Modal fuera del flujo principal del documento */}
             <NotebookDetailModal key={selectedNotebook?.id || "empty-modal"} notebook={selectedNotebook} isOpen={!!selectedNotebook} onClose={() => setSelectedNotebook(null)} onEditNote={handleEditNote} onDeleteNote={handleDeleteNote} />
         </div>
     );
