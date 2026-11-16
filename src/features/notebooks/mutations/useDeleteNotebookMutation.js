@@ -12,6 +12,7 @@ export const useDeleteNotebookMutation = () => {
         onMutate: async (deletedId) => {
             // 1. Cancelamos peticiones en vuelo para evitar que sobrescriban nuestro cambio optimista
             await queryClient.cancelQueries({ queryKey: notebooksKeys.lists() });
+            await queryClient.cancelQueries({ queryKey: notebooksKeys.trashed() });
 
             // 2. Guardamos una "foto" del estado anterior por si la API falla y necesitamos revertir
             const previousNotebooks = queryClient.getQueryData(notebooksKeys.lists());
@@ -37,6 +38,7 @@ export const useDeleteNotebookMutation = () => {
         // Independientemente de si falló o fue exitoso, re-sincronizamos la fuente de verdad con Laravel
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: notebooksKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: notebooksKeys.trashed() });
         },
     });
 };

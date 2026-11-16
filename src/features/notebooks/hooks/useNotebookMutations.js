@@ -3,6 +3,8 @@ import { useReorderNotebooksMutation } from "../mutations/useReorderNotebooksMut
 import { useCreateNotebookMutation } from "../mutations/useCreateNotebookMutation";
 import { useUpdateNotebookMutation } from "../mutations/useUpdateNotebookMutation";
 import { useDeleteNotebookMutation } from "../mutations/useDeleteNotebookMutation";
+import { useTrashedNotebooksQuery } from "../queries/useTrashedNotebooksQuery";
+import { useRestoreNotebookMutation } from "../mutations/useRestoreNotebookMutation";
 import { useTogglePinMutation } from "../mutations/useTogglePinMutation";
 
 /**
@@ -20,6 +22,8 @@ export const useNotebookMutations = (filters = {}) => {
     const { mutateAsync: createNotebook, isPending: isCreating } = useCreateNotebookMutation();
     const { mutateAsync: updateNotebook, isPending: isUpdating } = useUpdateNotebookMutation();
     const { mutateAsync: deleteNotebook, isPending: isDeleting } = useDeleteNotebookMutation();
+    const { data: trashedNotebooks = [], isLoading: isTrashed, isError: isTrashedError } = useTrashedNotebooksQuery({ enabled: true });
+    const { mutateAsync: restoreNotebook, isPending: isRestoring } = useRestoreNotebookMutation();
     const { mutateAsync: togglePinMutate, isPending: isTogglingPin } = useTogglePinMutation();
 
     // 3. Función de negocio para manejar el reordenamiento visual (Drag & Drop)
@@ -59,5 +63,11 @@ export const useNotebookMutations = (filters = {}) => {
         deleteNotebook,
         togglePin: handleTogglePin,
         handleReorder,
+
+        trashedNotebooks,
+        isTrashed,
+        isTrashedError,
+        restoreNotebook,
+        isRestoring,
     };
 };

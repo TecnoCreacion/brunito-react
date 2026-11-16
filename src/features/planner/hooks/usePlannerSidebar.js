@@ -6,7 +6,7 @@ export const usePlannerSidebar = (userId) => {
     const { data: fixedTasks = [], isLoading: isLoadingTasks, isError: isErrorTasks } = useFixedTasksQuery(userId);
 
     // 2. Obtenemos las etiquetas
-    const { data: tags = [], isLoading: isLoadingTags, isError: isErrorTags } = usePlannerTagsQuery();
+    const { data: tags = [], isLoading: isLoadingTags, isError: isErrorTags } = usePlannerTagsQuery(userId);
 
     // 3. Orquestamos el estado derivado para la UI
     // Si cualquiera de las dos consultas está cargando, el sidebar está cargando

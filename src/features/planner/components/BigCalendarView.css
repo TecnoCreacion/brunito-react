@@ -1,0 +1,39 @@
+/* Contenedor mensual: altura 100% automática según la cantidad de semanas (4, 5 o 6) de cada mes */
+.planner-calendar-container .rbc-month-view {
+    height: auto !important;
+    min-height: 480px;
+}
+
+/* Cada fila semanal se adapta automáticamente al alto real de las tarjetas visibles en esa semana */
+.planner-calendar-container .rbc-month-row {
+    flex: 1 0 auto !important;
+    min-height: 115px !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+.planner-calendar-container .rbc-row-content {
+    z-index: 2;
+    padding-bottom: 4px;
+}
+
+/* Evita que eventos normales se corten y permite altura dinámica por tarjeta */
+.planner-calendar-container .rbc-event {
+    height: auto !important;
+    margin-bottom: 2px;
+}
+
+/* Estilo especial para el evento sintético "+ N más" */
+.planner-calendar-container .rbc-event.planner-show-more-event {
+    background-color: var(--tblr-primary-lt) !important;
+    border: 1px solid rgba(var(--tblr-primary-rgb), 0.25) !important;
+    color: var(--tblr-primary) !important;
+    font-weight: 600;
+    padding: 2px 6px !important;
+    transition: all 0.15s ease;
+}
+
+.planner-calendar-container .rbc-event.planner-show-more-event:hover {
+    background-color: var(--tblr-primary) !important;
+    color: #ffffff !important;
+}

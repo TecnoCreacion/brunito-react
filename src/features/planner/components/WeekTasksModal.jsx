@@ -73,8 +73,8 @@ export const WeekTasksModal = ({ isOpen, onClose, onSave, weekNumber, availableM
                                                             {task.tags?.length > 0 && (
                                                                 <div className="d-flex flex-wrap gap-1">
                                                                     {task.tags.map((tag) => (
-                                                                        <span key={tag} className="badge bg-secondary-lt text-secondary border border-secondary-subtle" style={{ fontSize: "0.65rem" }}>
-                                                                            {tag}
+                                                                        <span key={tag.id || tag} className="badge bg-secondary-lt text-secondary border border-secondary-subtle" style={{ fontSize: "0.65rem" }}>
+                                                                            {tag.name || tag}
                                                                         </span>
                                                                     ))}
                                                                 </div>

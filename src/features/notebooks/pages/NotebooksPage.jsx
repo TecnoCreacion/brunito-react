@@ -4,7 +4,8 @@ import { useNotebookMutations } from "../hooks/useNotebookMutations"; // 🚀 AR
 import { useNoteMutations } from "../hooks/useNoteMutations";
 import { NotebookBoard } from "../components/NotebookBoard";
 import { NotebookDetailModal } from "../components/NotebookDetailModal";
-import { IconPlus } from "@tabler/icons-react";
+import { TrashedNotebooksCarousel } from "../components/TrashedNotebooksCarousel";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { alerts } from "@/shared/utils/alerts";
 
@@ -14,14 +15,16 @@ export const NotebooksPage = () => {
     const { user } = useAuth();
 
     // 🚀 ARQUITECTURA: Único punto de contacto con el dominio Notebooks (Capa 3)[cite: 7]
-    const { notebooks, isLoading, isError, createNotebook, deleteNotebook, updateNotebook, togglePin, isCreating } = useNotebookMutations({ with: "user", where: { user_id: user.id } });
+    const { notebooks, isLoading, isError, createNotebook, deleteNotebook, updateNotebook, togglePin, isCreating, trashedNotebooks, isTrashed, isTrashedError, restoreNotebook } = useNotebookMutations({ with: "user", where: { user_id: user.id } });
 
     // Acciones del subdominio de Notas
     const { updateNote, deleteNote } = useNoteMutations();
 
     // 🚀 ESTADO LOCAL: Exclusivamente para feedback visual del DOM (Capa 1)[cite: 7]
     const [deletingId, setDeletingId] = useState(null);
+    const [restoringId, setRestoringId] = useState(null);
     const [selectedNotebook, setSelectedNotebook] = useState(null);
+    const [isTrashOpen, setIsTrashOpen] = useState(false);
 
     const handleQuickCreate = async () => {
         try {
@@ -38,7 +41,7 @@ export const NotebooksPage = () => {
     };
 
     const handleDelete = async (id) => {
-        const isConfirmed = await alerts.confirmDelete("¿Eliminar esta libreta?", "Se perderán todas las notas contenidas en ella. Esta acción es irreversible.");
+        const isConfirmed = await alerts.confirmDelete("¿Mover libreta a la papelera?", "Podrás restaurarla más tarde desde la papelera.");
 
         if (!isConfirmed) return;
 
@@ -50,6 +53,16 @@ export const NotebooksPage = () => {
             console.log(error);
         } finally {
             setDeletingId(null);
+        }
+    };
+
+    const handleRestore = async (id) => {
+        setRestoringId(id);
+
+        try {
+            await restoreNotebook(id);
+        } finally {
+            setRestoringId(null);
         }
     };
 
@@ -99,11 +112,19 @@ export const NotebooksPage = () => {
                     <p className="text-muted small mb-0">Organiza tus espacios de notas visuales</p>
                 </div>
 
-                <button className="btn btn-primary d-flex align-items-center gap-1" onClick={handleQuickCreate} disabled={isCreating}>
-                    {isCreating ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : <IconPlus size={18} />}
-                    <span>{isCreating ? "Creando..." : "Nueva Libreta"}</span>
-                </button>
+                <div className="d-flex align-items-center gap-2">
+                    <button type="button" className={`btn d-flex align-items-center gap-1 ${isTrashOpen ? "btn-secondary" : "btn-outline-secondary"}`} onClick={() => setIsTrashOpen((prev) => !prev)}>
+                        <IconTrash size={18} />
+                        <span>Papelera</span>
+                    </button>
+                    <button className="btn btn-primary d-flex align-items-center gap-1" onClick={handleQuickCreate} disabled={isCreating}>
+                        {isCreating ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : <IconPlus size={18} />}
+                        <span>{isCreating ? "Creando..." : "Nueva Libreta"}</span>
+                    </button>
+                </div>
             </div>
+
+            {isTrashOpen && <TrashedNotebooksCarousel notebooks={trashedNotebooks} isLoading={isTrashed} isError={isTrashedError} restoringId={restoringId} onRestore={handleRestore} onClose={() => setIsTrashOpen(false)} />}
 
             {isError && (
                 <div className="alert alert-danger" role="alert">

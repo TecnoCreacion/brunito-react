@@ -28,6 +28,7 @@ export const plannerService = {
             orderBy: {
                 start_date: "ASC",
             },
+            limit: 5000,
         });
         const rawData = response.data.data || response.data;
 
@@ -92,8 +93,12 @@ export const plannerService = {
     /**
      * Obtiene todas las etiquetas disponibles (Normalizadas a objetos del Frontend).
      */
-    getTags: async () => {
-        const { data } = await apiClient.post(plannerApi.getTags);
+    getTags: async (userId) => {
+        const { data } = await apiClient.post(plannerApi.getTags, {
+            where: {
+                user_id: userId,
+            },
+        });
         const rawTags = data.data || data;
 
         if (!Array.isArray(rawTags)) return [];

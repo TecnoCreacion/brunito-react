@@ -97,6 +97,18 @@ export const notebooksService = {
         return notebookAdapter(response.data.data);
     },
 
+    getTrashed: async () => {
+        const response = await apiClient.post(`/notebooks/search`, { only_trashed: true, with: ["notes", "user"] });
+
+        return response.data.data;
+    },
+
+    restore: async (id) => {
+        const response = await apiClient.post(`/notebooks/${id}/restore`);
+
+        return response.data.data;
+    },
+
     reorderNotebooks: async (payload) => {
         const response = await apiClient.put("/notebooks/reorder", { order: payload });
 

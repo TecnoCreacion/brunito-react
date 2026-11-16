@@ -124,7 +124,7 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                                         </div>
                                                         <div className="col-sm-6">
                                                             <label className="form-label text-muted small text-uppercase">Fin</label>
-                                                            <input type="time" className="form-control" value={schedule.end_time} onChange={(e) => handleScheduleChange(index, "end_time", e.target.value)} disabled={isSaving} required />
+                                                            <input type="time" className="form-control" value={schedule.end_time} onChange={(e) => handleScheduleChange(index, "end_time", e.target.value)} disabled={isSaving} />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -224,8 +224,8 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                         <div className="d-flex flex-wrap gap-2 mt-2">
                                             {(!formData.tags || formData.tags.length === 0) && <span className="text-muted small">No hay etiquetas seleccionadas.</span>}
                                             {formData.tags?.map((tag) => (
-                                                <span key={tag} className="badge bg-primary text-white d-flex align-items-center gap-2 px-2 py-1" style={{ fontSize: "0.85rem" }}>
-                                                    {tag}
+                                                <span key={tag.id || tag} className="badge bg-primary text-white d-flex align-items-center gap-2 px-2 py-1" style={{ fontSize: "0.85rem" }}>
+                                                    {tag.name || tag}
                                                     <span className="opacity-75 hover:opacity-100 transition-opacity" style={{ cursor: isSaving ? "not-allowed" : "pointer", paddingLeft: "4px" }} onClick={() => !isSaving && handleRemoveTag(tag)} title="Quitar etiqueta">
                                                         &times;
                                                     </span>
