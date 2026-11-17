@@ -13,7 +13,7 @@ import { useTogglePinMutation } from "../mutations/useTogglePinMutation";
  *
  * @param {Object} filters - Filtros dinámicos desde la UI (ej. { search: "", isPinned: true })
  */
-export const useNotebookMutations = (filters = {}) => {
+export const useNotebookMutations = ({ userId = null, filters = {}, enableTrashed = false } = {}) => {
     // 1. Obtenemos los datos remotos mediante TanStack Query
     const { data: notebooks = [], isLoading, isError, refetch } = useNotebooksQuery(filters);
 
@@ -22,7 +22,7 @@ export const useNotebookMutations = (filters = {}) => {
     const { mutateAsync: createNotebook, isPending: isCreating } = useCreateNotebookMutation();
     const { mutateAsync: updateNotebook, isPending: isUpdating } = useUpdateNotebookMutation();
     const { mutateAsync: deleteNotebook, isPending: isDeleting } = useDeleteNotebookMutation();
-    const { data: trashedNotebooks = [], isLoading: isTrashed, isError: isTrashedError } = useTrashedNotebooksQuery({ enabled: true });
+    const { data: trashedNotebooks = [], isLoading: isTrashed, isError: isTrashedError } = useTrashedNotebooksQuery({ enabled: enableTrashed, userId });
     const { mutateAsync: restoreNotebook, isPending: isRestoring } = useRestoreNotebookMutation();
     const { mutateAsync: togglePinMutate, isPending: isTogglingPin } = useTogglePinMutation();
 

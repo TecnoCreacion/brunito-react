@@ -14,17 +14,19 @@ export const NotebooksPage = () => {
 
     const { user } = useAuth();
 
-    // 🚀 ARQUITECTURA: Único punto de contacto con el dominio Notebooks (Capa 3)[cite: 7]
-    const { notebooks, isLoading, isError, createNotebook, deleteNotebook, updateNotebook, togglePin, isCreating, trashedNotebooks, isTrashed, isTrashedError, restoreNotebook } = useNotebookMutations({ with: "user", where: { user_id: user.id } });
-
-    // Acciones del subdominio de Notas
-    const { updateNote, deleteNote } = useNoteMutations();
+    const userId = user?.id ?? null;
 
     // 🚀 ESTADO LOCAL: Exclusivamente para feedback visual del DOM (Capa 1)[cite: 7]
     const [deletingId, setDeletingId] = useState(null);
     const [restoringId, setRestoringId] = useState(null);
     const [selectedNotebook, setSelectedNotebook] = useState(null);
     const [isTrashOpen, setIsTrashOpen] = useState(false);
+
+    // 🚀 ARQUITECTURA: Único punto de contacto con el dominio Notebooks (Capa 3)[cite: 7]
+    const { notebooks, isLoading, isError, createNotebook, deleteNotebook, updateNotebook, togglePin, isCreating, trashedNotebooks, isTrashed, isTrashedError, restoreNotebook } = useNotebookMutations({ userId, filters: { with: "user", where: { user_id: userId } }, enableTrashed: isTrashOpen });
+
+    // Acciones del subdominio de Notas
+    const { updateNote, deleteNote } = useNoteMutations();
 
     const handleQuickCreate = async () => {
         try {

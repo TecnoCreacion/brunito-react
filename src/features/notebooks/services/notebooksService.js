@@ -97,8 +97,12 @@ export const notebooksService = {
         return notebookAdapter(response.data.data);
     },
 
-    getTrashed: async () => {
-        const response = await apiClient.post(`/notebooks/search`, { only_trashed: true, with: ["notes", "user"] });
+    getTrashed: async (userId) => {
+        const response = await apiClient.post(`/notebooks/search`, {
+            with: ["notes", "user"],
+            where: { user_id: userId },
+            only_trashed: true,
+        });
 
         return response.data.data;
     },
