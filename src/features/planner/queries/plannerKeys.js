@@ -1,5 +1,12 @@
 export const plannerKeys = {
     all: ["planners"],
+
+    // Estándar oficial BrunOS (Capítulo 3)
+    lists: () => [...plannerKeys.all, "list"],
+    list: (filters) => [...plannerKeys.lists(), filters],
+    details: () => [...plannerKeys.all, "detail"],
+    detail: (id) => [...plannerKeys.details(), id],
+
     getPlannerById: (id) => [...plannerKeys.all, id],
     getPlanners: () => [...plannerKeys.all, "planner"],
     getPlannersByUser: (userId) => [...plannerKeys.getPlanners(), { user_id: userId }],

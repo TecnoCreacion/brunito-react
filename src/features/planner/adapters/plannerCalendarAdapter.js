@@ -1,22 +1,29 @@
-// util local para parsear fechas de Laravel de forma segura (Compatible con Safari y Timezones)
+// Util local para parsear fechas de Laravel de forma segura (Compatible con Safari y Timezones)
 const parseLaravelDate = (dateString) => {
     if (!dateString) return new Date();
+    if (dateString instanceof Date) return dateString;
+
     // Reemplaza el espacio por 'T' para cumplir el estándar ISO 8601 y evitar 'Invalid Date' en Safari
-    const isoString = dateString.replace(" ", "T");
+    const isoString = String(dateString).replace(" ", "T");
     // Si la fecha viene sin hora (ej: "2026-10-15"), agregamos la hora local para evitar el salto de día por timezone
     const safeString = isoString.includes("T") ? isoString : `${isoString}T00:00:00`;
     return new Date(safeString);
 };
 
-export const plannerCalendarAdapter = (rawPlanner) => {
+export const plannerCalendarAdapter = (rawResponse) => {
+    if (!rawResponse) return null;
+
+    // Desenvolvemos automáticamente si viene envuelto en ApiResponse::success({ success, data, message })
+    const rawPlanner = rawResponse.data && typeof rawResponse.data === "object" && !Array.isArray(rawResponse.data) ? rawResponse.data : rawResponse;
+
+    if (!rawPlanner || !rawPlanner.id) return null;
+
     // 1. Procesamos las etiquetas protegiendo a React de valores nulos o strings puros
     const tags = Array.isArray(rawPlanner.tags)
         ? rawPlanner.tags.map((tag) => {
-              // Manejo defensivo: si Laravel envía un arreglo de strings
               if (typeof tag === "string") {
                   return { id: tag.toLowerCase(), name: tag, color: "primary" };
               }
-              // Manejo estándar: si Laravel envía la relación como objetos
               return {
                   id: tag.id,
                   name: tag.name,
@@ -25,48 +32,42 @@ export const plannerCalendarAdapter = (rawPlanner) => {
           })
         : [];
 
-    // ⚠️ DEUDA TÉCNICA ACEPTADA TEMPORALMENTE:
-    // Determinar si algo está "cancelado" basado en el texto de una etiqueta rompe la Regla 3.
-    // Laravel debería enviar un campo booleano 'is_cancelled' o resolver el color desde el backend[cite: 7].
+    // ⚠️ DEUDA TÉCNICA ACEPTADA TEMPORALMENTE (Capítulo 11):
+    // Idealmente Laravel resolverá el color o estado booleano desde el backend.
     const isCancelled = tags.some((tag) => tag.name.toLowerCase() === "cancelada");
     const isImportant = tags.some((tag) => tag.name.toLowerCase() === "importante");
 
-    // Utilizamos variables semánticas de Tabler UI en lugar de HEX estáticos
     let eventColor = rawPlanner.color_theme || "primary";
-    if (isCancelled) eventColor = "secondary"; // Gris
-    if (isImportant) eventColor = "danger"; // Rojo
+    if (isCancelled) eventColor = "secondary";
+    if (isImportant) eventColor = "danger";
 
     return {
         id: rawPlanner.id,
-        title: rawPlanner.title,
+        title: rawPlanner.title || "",
 
-        // 🚀 CORRECCIÓN CRÍTICA: Parseo seguro para evitar bugs de zona horaria y Safari
         start: parseLaravelDate(rawPlanner.start_date),
         end: rawPlanner.end_date ? parseLaravelDate(rawPlanner.end_date) : parseLaravelDate(rawPlanner.start_date),
 
         allDay: rawPlanner.all_day === 1 || rawPlanner.all_day === true,
-
-        // Mapeo de la llave foránea para las columnas de recursos
-        resourceId: rawPlanner.planner_resource_id,
-
-        // Propiedad visual limpia para el eventPropGetter
+        resourceId: rawPlanner.planner_resource_id ?? null,
         color: eventColor,
 
-        // Mantenemos la información original encapsulada para cuando el usuario haga clic (Modal)
+        // Exponemos tags en el nivel raíz para que los componentes presentacionales no dependan de extendedProps
+        tags,
+
         extendedProps: {
             description: rawPlanner.description || "",
-            status: rawPlanner.status || "pending",
-            tags: tags, // Ahora siempre es un array de objetos consistente
-            // Conservamos los strings originales de Laravel para el envío de formularios (Capa 10)[cite: 7]
+            status: rawPlanner.status ?? true,
+            tags,
             originalStart: rawPlanner.start_date,
             originalEnd: rawPlanner.end_date,
-            originalResourceId: rawPlanner.planner_resource_id,
+            originalResourceId: rawPlanner.planner_resource_id ?? null,
         },
     };
 };
 
 export const plannerListAdapter = (rawList) => {
-    if (!Array.isArray(rawList)) return [];
-
-    return rawList.map(plannerCalendarAdapter);
+    // Soporta tanto array directo como respuesta envuelta { data: [...] }
+    const list = Array.isArray(rawList) ? rawList : Array.isArray(rawList?.data) ? rawList.data : [];
+    return list.map(plannerCalendarAdapter).filter(Boolean);
 };

@@ -7,9 +7,12 @@ export const useCreatePlannerMutation = () => {
 
     return useMutation({
         mutationFn: (plannerData) => plannerService.create(plannerData),
-        onSuccess: () => {
+        onSuccess: async () => {
             // Invalidamos la caché para que FullCalendar recargue los datos actualizados de inmediato
-            return queryClient.invalidateQueries({ queryKey: plannerKeys.all });
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: plannerKeys.lists(), refetchType: "active" }), // actualizar listado general
+                queryClient.invalidateQueries({ queryKey: plannerKeys.tags(), refetchType: "active" }), // actualizar lista de tags
+            ]);
         },
     });
 };

@@ -10,6 +10,7 @@ import { SidebarWidget } from "../components/SidebarWidget";
 import { PlannerModal } from "../components/PlannerModal";
 import { FixedTaskModal } from "../components/FixedTaskModal";
 import { WeekTasksModal } from "../components/WeekTasksModal";
+import { PlannerTagFormModal } from "../components/PlannerTagFormModal";
 
 import { FAB } from "@/shared/components/FAB/FAB";
 import { MiniCalendarPicker } from "@/shared/components/MiniCalendarPicker/MiniCalendarPicker";
@@ -60,6 +61,9 @@ export const PlannerPage = () => {
     const [isWeekModalOpen, setIsWeekModalOpen] = useState(false);
     const [selectedWeekNumber, setSelectedWeekNumber] = useState(null);
     const [selectedIsoYear, setSelectedIsoYear] = useState(null); // Nuevo estado para la precisión ISO
+
+    const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+    const [editingTag, setEditingTag] = useState(null);
 
     const manualFixedTasks = fixedTasks?.filter((task) => !task.rotation_week || task.rotation_week === "") || [];
 
@@ -179,12 +183,28 @@ export const PlannerPage = () => {
         setSelectedPlannerId(null);
     };
 
-    if (isError)
+    if (isError) {
         return (
             <div className="alert alert-danger" role="alert">
                 Error al cargar los recordatorios desde el servidor.
             </div>
         );
+    }
+
+    const handleOpenAddTag = () => {
+        setEditingTag(null);
+        setIsTagModalOpen(true);
+    };
+
+    const handleOpenEditTag = (tag) => {
+        setEditingTag(tag);
+        setIsTagModalOpen(true);
+    };
+
+    const handleCloseTagModal = () => {
+        setIsTagModalOpen(false);
+        setEditingTag(null);
+    };
 
     return (
         <>
@@ -198,7 +218,7 @@ export const PlannerPage = () => {
                         </div>
                     </div>
 
-                    <SidebarWidget fixedTasks={fixedTasks} tags={tags} selectedTags={selectedTags} onToggleTag={handleToggleTag} onAddFixedTask={handleAddFixedTask} onEditFixedTask={handleEditFixedTask} isLoading={isLoadingSidebar} />
+                    <SidebarWidget fixedTasks={fixedTasks} tags={tags} selectedTags={selectedTags} onToggleTag={handleToggleTag} onAddFixedTask={handleAddFixedTask} onEditFixedTask={handleEditFixedTask} isLoading={isLoadingSidebar} onAddTag={handleOpenAddTag} onEditTag={handleOpenEditTag} />
                 </div>
 
                 {/* ÁREA PRINCIPAL: Calendario Grande */}
@@ -245,6 +265,8 @@ export const PlannerPage = () => {
                 availableManualTasks={manualFixedTasks}
                 isSaving={isSchedulingWeek} // El estado pending de tu mutación
             />
+
+            <PlannerTagFormModal isOpen={isTagModalOpen} initialData={editingTag} onClose={handleCloseTagModal} />
 
             {isMobile && !isModalOpen && <FAB onClick={handleFabClick} ariaLabel="Agregar nuevo evento" />}
         </>

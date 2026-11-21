@@ -1,7 +1,7 @@
 /* Contenedor mensual: altura 100% automática según la cantidad de semanas (4, 5 o 6) de cada mes */
 .planner-calendar-container .rbc-month-view {
     height: auto !important;
-    min-height: 480px;
+    min-height: auto;
 }
 
 /* Cada fila semanal se adapta automáticamente al alto real de las tarjetas visibles en esa semana */

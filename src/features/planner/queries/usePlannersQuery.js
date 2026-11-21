@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { plannerService } from "../services/plannerService";
-import { plannerKeys } from "../queries/plannerKeys";
+import { plannerKeys } from "./plannerKeys";
 
 export const usePlannersQuery = (userId) => {
     return useQuery({

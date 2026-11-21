@@ -1,8 +1,9 @@
-import { IconCalendarEvent, IconTags, IconCheck, IconPlus, IconChevronRight, IconX } from "@tabler/icons-react";
+import { IconCalendarEvent, IconTags, IconCheck, IconPlus, IconChevronRight, IconX, IconPencil } from "@tabler/icons-react";
 
-// 🚀 Agregamos onClearTags al contrato del componente
-export const SidebarWidget = ({ fixedTasks = [], tags = [], selectedTags = [], onToggleTag, onClearTags, onAddFixedTask, onEditFixedTask, isLoading }) => {
+export const SidebarWidget = ({ fixedTasks = [], tags = [], selectedTags = [], onToggleTag, onClearTags, onAddFixedTask, onEditFixedTask, onAddTag, onEditTag, isLoading }) => {
     const hasActiveFilters = selectedTags.length > 0;
+
+    const uniqueTags = Array.from(new Map(tags.map((tag) => [tag.id, tag])).values());
 
     return (
         <div className="d-flex flex-column gap-3">
@@ -40,7 +41,7 @@ export const SidebarWidget = ({ fixedTasks = [], tags = [], selectedTags = [], o
                 </div>
             </div>
 
-            {/* Card 2: Filtro de Etiquetas (Tags) */}
+            {/* Card 2: Filtro y Gestión de Etiquetas (Tags) */}
             <div className="card shadow-sm border-0">
                 <div className="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
                     <h3 className="card-title text-primary d-flex align-items-center gap-2 m-0">
@@ -48,29 +49,38 @@ export const SidebarWidget = ({ fixedTasks = [], tags = [], selectedTags = [], o
                         Filtros
                     </h3>
 
-                    {/* 🚀 ARQUITECTURA VISUAL: Botón de Limpiar dinámico */}
-                    {hasActiveFilters && (
-                        <button className="btn btn-sm btn-ghost-secondary px-2 d-flex align-items-center gap-1 text-muted transition-base hover-text-danger" onClick={onClearTags} title="Limpiar todos los filtros">
-                            <IconX size={14} />
-                            <span className="small">Limpiar</span>
+                    <div className="d-flex align-items-center gap-1">
+                        {hasActiveFilters && (
+                            <button type="button" className="btn btn-sm btn-ghost-secondary px-2 d-flex align-items-center gap-1 text-muted transition-base hover-text-danger" onClick={onClearTags} title="Limpiar todos los filtros">
+                                <IconX size={14} />
+                                <span className="small">Limpiar</span>
+                            </button>
+                        )}
+                        <button type="button" onClick={onAddTag} className="btn btn-sm btn-primary shadow-sm" title="Agregar etiqueta">
+                            <IconPlus size={16} stroke={2.5} />
                         </button>
-                    )}
+                    </div>
                 </div>
 
                 <div className="card-body pt-2">
                     {isLoading ? (
                         <div className="text-center text-muted small py-3">Cargando etiquetas...</div>
-                    ) : tags.length === 0 ? (
+                    ) : uniqueTags.length === 0 ? (
                         <p className="text-muted small fst-italic mb-0 text-center py-2">No hay etiquetas registradas.</p>
                     ) : (
                         <div className="d-flex flex-wrap gap-2">
-                            {tags.map((tag) => {
+                            {uniqueTags.map((tag) => {
                                 const isSelected = selectedTags.includes(tag.id);
                                 return (
-                                    <button key={tag.id} onClick={() => onToggleTag(tag.id)} className={`btn btn-sm rounded-pill d-flex align-items-center gap-1 transition-base ${isSelected ? `btn-${tag.color || "primary"} shadow-sm` : "btn-outline-secondary"}`}>
-                                        {isSelected && <IconCheck size={14} />}
-                                        {tag.name}
-                                    </button>
+                                    <div key={tag.id} className="btn-group btn-group-sm shadow-sm" role="group">
+                                        <button type="button" onClick={() => onToggleTag(tag.id)} className={`btn rounded-start-pill d-flex align-items-center gap-1 transition-base ${isSelected ? `btn-${tag.color || "primary"}` : "btn-outline-secondary"}`}>
+                                            {isSelected && <IconCheck size={14} />}
+                                            <span>{tag.name}</span>
+                                        </button>
+                                        <button type="button" onClick={() => onEditTag(tag)} className={`btn rounded-end-pill px-2 transition-base ${isSelected ? `btn-${tag.color || "primary"}` : "btn-outline-secondary"}`} title={`Editar etiqueta "${tag.name}"`} aria-label={`Editar etiqueta ${tag.name}`}>
+                                            <IconPencil size={12} />
+                                        </button>
+                                    </div>
                                 );
                             })}
                         </div>

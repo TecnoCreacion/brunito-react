@@ -1,6 +1,5 @@
 import { apiClient } from "@/config/axios";
 import { plannerApi } from "../api/plannerApi";
-// 🚀 ARQUITECTURA: Importación de Adapters corporativos para blindar la Capa 5
 import { plannerCalendarAdapter, plannerListAdapter } from "../adapters/plannerCalendarAdapter";
 import { plannerFixedTaskAdapter, plannerFixedTaskListAdapter } from "../adapters/plannerFixedTaskAdapter";
 
@@ -97,6 +96,9 @@ export const plannerService = {
         const { data } = await apiClient.post(plannerApi.getTags, {
             where: {
                 user_id: userId,
+            },
+            orderBy: {
+                name: "ASC",
             },
         });
         const rawTags = data.data || data;

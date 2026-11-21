@@ -66,42 +66,16 @@ const PlannerModalFetcher = ({ onClose, selectedDate, plannerId, userId }) => {
 const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
     const [tagInput, setTagInput] = useState("");
 
-    const { title, setTitle, description, setDescription, startDate, setStartDate, startTime, setStartTime, endDate, setEndDate, endTime, setEndTime, tags, handleAddTag, handleRemoveTag, isPending, isEditing, errors, handleSubmit } = usePlannerForm({
+    const { title, setTitle, description, setDescription, startDate, setStartDate, startTime, setStartTime, endDate, setEndDate, endTime, setEndTime, tags, availableTags, handleAddTag, handleRemoveTag, isPending, isEditing, errors, handleSubmit } = usePlannerForm({
         initialData,
         selectedDate,
         userId,
         onClose,
     });
 
-    // 🚀 CORRECCIÓN CRÍTICA 1: Catálogo de sugerencias estructurado como Objetos del Frontend
-    const recommendedTags = [
-        { id: "importante", name: "Importante", color: "danger" },
-        { id: "médico", name: "Médico", color: "info" },
-        { id: "trabajo", name: "Trabajo", color: "primary" },
-        { id: "familia", name: "Familia", color: "success" },
-        { id: "urgente", name: "Urgente", color: "warning" },
-        { id: "reunión", name: "Reunión", color: "secondary" },
-        { id: "proyecto", name: "Proyecto", color: "dark" },
-    ];
-
-    // 🚀 CORRECCIÓN CRÍTICA 2: Comparación homogénea de IDs entre objetos
-    const availableTags = recommendedTags.filter((rec) => !tags.some((t) => (typeof t === "object" ? t.id === rec.id : t === rec.id)));
-
     const onAddTagClick = (tagValue) => {
         if (!tagValue) return;
-
-        // Normalizamos si el usuario escribió un texto manual
-        const newTag = typeof tagValue === "string" ? { id: tagValue.toLowerCase().trim(), name: tagValue.trim(), color: "primary" } : tagValue;
-
-        const tagExists = tags.some((t) => {
-            const existingId = typeof t === "object" ? t.id : t;
-            return existingId === newTag.id;
-        });
-
-        if (!tagExists) {
-            handleAddTag(newTag);
-        }
-
+        handleAddTag(tagValue);
         setTagInput("");
     };
 
@@ -190,10 +164,10 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                             </button>
                         </div>
 
-                        {/* 🚀 CORRECCIÓN CRÍTICA 3: Renderizado de sugerencias con key y propiedades garantizadas */}
+                        {/* Etiquetas disponibles (creadas por el usuario + sugerencias del sistema) */}
                         {availableTags.length > 0 && (
                             <div className="d-flex flex-wrap gap-1 mb-3">
-                                <span className="text-muted small me-2 align-self-center">Sugerencias:</span>
+                                <span className="text-muted small me-2 align-self-center">Disponibles:</span>
                                 {availableTags.map((t) => (
                                     <span key={t.id} className={`badge bg-${t.color}-lt cursor-pointer transition-colors hover-shadow-sm d-flex align-items-center gap-1`} onClick={() => onAddTagClick(t)}>
                                         <IconPlus size={12} stroke={3} /> {t.name}
@@ -202,23 +176,18 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                             </div>
                         )}
 
-                        {/* 🚀 CORRECCIÓN CRÍTICA 4: Renderizado defensivo de etiquetas seleccionadas */}
+                        {/* Etiquetas seleccionadas en este recordatorio */}
                         <div className="d-flex flex-wrap gap-2 mt-2">
                             {tags.length === 0 && <span className="text-muted small">No hay etiquetas seleccionadas.</span>}
 
-                            {tags.map((tag, index) => {
-                                const normalizedTag = typeof tag === "string" ? { id: tag.toLowerCase(), name: tag, color: "primary" } : tag;
-                                const tagKey = normalizedTag.id || normalizedTag.name || `tag-${index}`;
-
-                                return (
-                                    <span key={tagKey} className={`badge bg-${normalizedTag.color || "primary"} text-white d-flex align-items-center gap-2 p-2 shadow-sm`}>
-                                        {normalizedTag.name}
-                                        <span style={{ cursor: "pointer", opacity: 0.8 }} onClick={() => handleRemoveTag(tag)} title="Eliminar">
-                                            <IconX size={14} />
-                                        </span>
+                            {tags.map((tag) => (
+                                <span key={tag.id} className={`badge bg-${tag.color || "primary"} text-white d-flex align-items-center gap-2 p-2 shadow-sm`}>
+                                    {tag.name}
+                                    <span style={{ cursor: "pointer", opacity: 0.8 }} onClick={() => handleRemoveTag(tag)} title="Eliminar">
+                                        <IconX size={14} />
                                     </span>
-                                );
-                            })}
+                                </span>
+                            ))}
                         </div>
                     </div>
                 </div>
