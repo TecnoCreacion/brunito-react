@@ -51,6 +51,7 @@ export const plannerCalendarAdapter = (rawResponse) => {
         allDay: rawPlanner.all_day === 1 || rawPlanner.all_day === true,
         resourceId: rawPlanner.planner_resource_id ?? null,
         color: eventColor,
+        sortOrder: rawPlanner.sort_order ?? null,
 
         // Exponemos tags en el nivel raíz para que los componentes presentacionales no dependan de extendedProps
         tags,

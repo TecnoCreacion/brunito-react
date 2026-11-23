@@ -7,12 +7,26 @@ export const useUpdatePlannerMutation = () => {
 
     return useMutation({
         mutationFn: ({ id, data }) => plannerService.update(id, data),
-        onSuccess: async () => {
-            // Invalidamos la caché para refrescar el calendario automáticamente
+
+        onSuccess: async (_, variables) => {
+            const { id } = variables;
+
             await Promise.all([
-                queryClient.invalidateQueries({ queryKey: plannerKeys.lists() }), // actualizar listado general
-                queryClient.invalidateQueries({ queryKey: plannerKeys.details() }), // actualizar detalles de la seleccion
-                queryClient.invalidateQueries({ queryKey: plannerKeys.tags() }), // actualizar listado de tags
+                queryClient.invalidateQueries({
+                    queryKey: plannerKeys.getPlanners(),
+                }),
+
+                queryClient.invalidateQueries({
+                    queryKey: plannerKeys.events.all(),
+                }),
+
+                queryClient.invalidateQueries({
+                    queryKey: plannerKeys.detail(id),
+                }),
+
+                queryClient.invalidateQueries({
+                    queryKey: plannerKeys.tags(),
+                }),
             ]);
         },
     });

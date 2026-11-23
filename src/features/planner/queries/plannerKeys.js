@@ -1,31 +1,39 @@
 export const plannerKeys = {
     all: ["planners"],
 
-    // Estándar oficial BrunOS (Capítulo 3)
+    // Listados
     lists: () => [...plannerKeys.all, "list"],
     list: (filters) => [...plannerKeys.lists(), filters],
+
+    // Consultas generales
+    queries: () => [...plannerKeys.all, "query"],
+    getPlanners: () => [...plannerKeys.queries(), "planner"],
+    getPlannersByUser: (userId) => [...plannerKeys.getPlanners(), { user_id: userId }],
+
+    // Detalles
     details: () => [...plannerKeys.all, "detail"],
     detail: (id) => [...plannerKeys.details(), id],
 
-    getPlannerById: (id) => [...plannerKeys.all, id],
-    getPlanners: () => [...plannerKeys.all, "planner"],
-    getPlannersByUser: (userId) => [...plannerKeys.getPlanners(), { user_id: userId }],
+    // Compatibilidad con nombres anteriores
+    getPlannerById: (id) => plannerKeys.detail(id),
 
+    // Eventos
     events: {
         all: () => [...plannerKeys.all, "event"],
-        allByUser: (userId) => [...plannerKeys.getPlanners(), { user_id: userId }],
-        list: (userId, filters) => [...plannerKeys.events.all(userId), "list", filters],
+        allByUser: (userId) => [...plannerKeys.events.all(), { user_id: userId }],
+        list: (userId, filters = {}) => [...plannerKeys.events.allByUser(userId), "list", filters],
     },
 
-    // Nuevas llaves para el Sidebar
-    // fixedTasks: (userId) => [...plannerKeys.all, "fixed-tasks", userId],
+    // Tareas fijas
     fixedTasks: {
         all: (userId) => [...plannerKeys.all, "fixed-tasks", userId],
-        // ESTA ES LA FUNCIÓN QUE REACT QUERY ESTÁ BUSCANDO Y NO ENCUENTRA
         list: (userId) => [...plannerKeys.fixedTasks.all(userId), "list"],
         detail: (userId, id) => [...plannerKeys.fixedTasks.all(userId), "detail", id],
     },
 
+    // Etiquetas
     tags: () => [...plannerKeys.all, "tags"],
+
+    // Recursos
     resources: () => [...plannerKeys.all, "resources"],
 };

@@ -3,7 +3,7 @@ import { IconCalendarEvent, IconTags, IconCheck, IconPlus, IconChevronRight, Ico
 export const SidebarWidget = ({ fixedTasks = [], tags = [], selectedTags = [], onToggleTag, onClearTags, onAddFixedTask, onEditFixedTask, onAddTag, onEditTag, isLoading }) => {
     const hasActiveFilters = selectedTags.length > 0;
 
-    const uniqueTags = Array.from(new Map(tags.map((tag) => [tag.id, tag])).values());
+    const uniqueTags = Array.from(new Map(tags.filter((tag) => tag?.name?.trim()).map((tag) => [tag.name.trim().toLowerCase(), tag])).values());
 
     return (
         <div className="d-flex flex-column gap-3">
@@ -14,7 +14,7 @@ export const SidebarWidget = ({ fixedTasks = [], tags = [], selectedTags = [], o
                         <IconCalendarEvent size={20} />
                         Tareas Fijas
                     </h3>
-                    <button onClick={onAddFixedTask} className="btn btn-sm btn-primary shadow-sm" title="Agregar tarea fija">
+                    <button type="button" onClick={onAddFixedTask} className="btn btn-sm btn-primary shadow-sm" title="Agregar tarea fija">
                         <IconPlus size={16} stroke={2.5} />
                     </button>
                 </div>

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog/ConfirmDialog";
 import { usePlannerForm } from "../hooks/usePlannerForm";
 import { usePlannerById } from "../hooks/usePlannerById";
-import { IconX, IconPlus } from "@tabler/icons-react";
+import { useDeletePlannerMutation } from "../mutations/useDeletePlannerMutation";
+import { IconX, IconPlus, IconTrash } from "@tabler/icons-react";
 
 // -------------------------------------------------------------------------
 // CAPA 1: CONTENEDOR (Controla la visibilidad global)
@@ -65,6 +67,9 @@ const PlannerModalFetcher = ({ onClose, selectedDate, plannerId, userId }) => {
 // -------------------------------------------------------------------------
 const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
     const [tagInput, setTagInput] = useState("");
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+
+    const { mutate: deletePlannerEvent, isPending: isDeleting } = useDeletePlannerMutation(userId);
 
     const { title, setTitle, description, setDescription, startDate, setStartDate, startTime, setStartTime, endDate, setEndDate, endTime, setEndTime, tags, availableTags, handleAddTag, handleRemoveTag, isPending, isEditing, errors, handleSubmit } = usePlannerForm({
         initialData,
@@ -73,17 +78,30 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
         onClose,
     });
 
+    const isBusy = isPending || isDeleting;
+
     const onAddTagClick = (tagValue) => {
         if (!tagValue) return;
         handleAddTag(tagValue);
         setTagInput("");
     };
 
+    const handleConfirmDelete = () => {
+        if (!initialData?.id) return;
+
+        deletePlannerEvent(initialData.id, {
+            onSuccess: () => {
+                setIsConfirmDeleteOpen(false);
+                onClose();
+            },
+        });
+    };
+
     return (
         <>
             <div className="modal-header">
                 <h5 className="modal-title">{isEditing ? "Modificar Recordatorio" : "Nuevo Recordatorio"}</h5>
-                <button type="button" className="btn-close" onClick={onClose} disabled={isPending}></button>
+                <button type="button" className="btn-close" onClick={onClose} disabled={isBusy}></button>
             </div>
 
             <form onSubmit={handleSubmit} noValidate>
@@ -92,7 +110,7 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
 
                     <div className="mb-3">
                         <label className="form-label required">Título del recordatorio</label>
-                        <input type="text" className={`form-control ${errors.title ? "is-invalid" : ""}`} placeholder="Ej: Reunión de planificación" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isPending} required />
+                        <input type="text" className={`form-control ${errors.title ? "is-invalid" : ""}`} placeholder="Ej: Reunión de planificación" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isBusy} required />
                         {errors.title && <div className="invalid-feedback">{errors.title[0]}</div>}
                     </div>
 
@@ -103,10 +121,10 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                                     <label className="form-label text-primary">Inicio</label>
                                     <div className="row g-2">
                                         <div className="col-7">
-                                            <input type="date" className={`form-control ${errors.start_date ? "is-invalid" : ""}`} value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={isPending} required />
+                                            <input type="date" className={`form-control ${errors.start_date ? "is-invalid" : ""}`} value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={isBusy} required />
                                         </div>
                                         <div className="col-5">
-                                            <input type="time" className={`form-control ${errors.start_time ? "is-invalid" : ""}`} value={startTime} onChange={(e) => setStartTime(e.target.value)} disabled={isPending} />
+                                            <input type="time" className={`form-control ${errors.start_time ? "is-invalid" : ""}`} value={startTime} onChange={(e) => setStartTime(e.target.value)} disabled={isBusy} />
                                         </div>
                                     </div>
                                 </div>
@@ -119,10 +137,10 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                                     <label className="form-label text-secondary">Finalización (Opcional)</label>
                                     <div className="row g-2">
                                         <div className="col-7">
-                                            <input type="date" className={`form-control ${errors.end_date ? "is-invalid" : ""}`} value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={isPending} />
+                                            <input type="date" className={`form-control ${errors.end_date ? "is-invalid" : ""}`} value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={isBusy} />
                                         </div>
                                         <div className="col-5">
-                                            <input type="time" className={`form-control ${errors.end_time ? "is-invalid" : ""}`} value={endTime} onChange={(e) => setEndTime(e.target.value)} disabled={isPending} />
+                                            <input type="time" className={`form-control ${errors.end_time ? "is-invalid" : ""}`} value={endTime} onChange={(e) => setEndTime(e.target.value)} disabled={isBusy} />
                                         </div>
                                     </div>
                                 </div>
@@ -138,7 +156,7 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
 
                     <div className="mb-3">
                         <label className="form-label">Descripción (Opcional)</label>
-                        <textarea className="form-control" rows="2" placeholder="Agrega notas adicionales o contexto..." value={description} onChange={(e) => setDescription(e.target.value)} disabled={isPending}></textarea>
+                        <textarea className="form-control" rows="2" placeholder="Agrega notas adicionales o contexto..." value={description} onChange={(e) => setDescription(e.target.value)} disabled={isBusy}></textarea>
                     </div>
 
                     <div className="mb-3">
@@ -157,14 +175,13 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                                         onAddTagClick(tagInput);
                                     }
                                 }}
-                                disabled={isPending}
+                                disabled={isBusy}
                             />
-                            <button type="button" className="btn btn-outline-secondary" onClick={() => onAddTagClick(tagInput)} disabled={isPending || !tagInput.trim()}>
+                            <button type="button" className="btn btn-outline-secondary" onClick={() => onAddTagClick(tagInput)} disabled={isBusy || !tagInput.trim()}>
                                 Agregar
                             </button>
                         </div>
 
-                        {/* Etiquetas disponibles (creadas por el usuario + sugerencias del sistema) */}
                         {availableTags.length > 0 && (
                             <div className="d-flex flex-wrap gap-1 mb-3">
                                 <span className="text-muted small me-2 align-self-center">Disponibles:</span>
@@ -176,7 +193,6 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                             </div>
                         )}
 
-                        {/* Etiquetas seleccionadas en este recordatorio */}
                         <div className="d-flex flex-wrap gap-2 mt-2">
                             {tags.length === 0 && <span className="text-muted small">No hay etiquetas seleccionadas.</span>}
 
@@ -192,15 +208,30 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                     </div>
                 </div>
 
-                <div className="modal-footer bg-light">
-                    <button type="button" className="btn btn-link link-secondary" onClick={onClose} disabled={isPending}>
-                        Cancelar
-                    </button>
-                    <Button type="submit" variant="primary" loading={isPending}>
-                        {isEditing ? "Actualizar Recordatorio" : "Guardar Recordatorio"}
-                    </Button>
+                {/* Pie del Modal: Eliminar a la izquierda (solo en edición) | Cancelar y Guardar a la derecha */}
+                <div className="modal-footer bg-light d-flex justify-content-between align-items-center">
+                    <div>
+                        {isEditing && (
+                            <Button type="button" variant="danger" outline disabled={isBusy} onClick={() => setIsConfirmDeleteOpen(true)} className="d-inline-flex align-items-center gap-1">
+                                <IconTrash size={16} />
+                                <span>Eliminar</span>
+                            </Button>
+                        )}
+                    </div>
+
+                    <div className="d-flex align-items-center gap-2">
+                        <button type="button" className="btn btn-link link-secondary" onClick={onClose} disabled={isBusy}>
+                            Cancelar
+                        </button>
+                        <Button type="submit" variant="primary" loading={isPending} disabled={isDeleting}>
+                            {isEditing ? "Actualizar Recordatorio" : "Guardar Recordatorio"}
+                        </Button>
+                    </div>
                 </div>
             </form>
+
+            {/* Diálogo Corporativo de Confirmación */}
+            <ConfirmDialog isOpen={isConfirmDeleteOpen} title="Eliminar recordatorio" message={`¿Estás seguro de que deseas eliminar "${initialData?.title}"? Esta acción moverá el registro a la papelera.`} variant="danger" confirmLabel="Sí, eliminar" loading={isDeleting} onConfirm={handleConfirmDelete} onCancel={() => setIsConfirmDeleteOpen(false)} />
         </>
     );
 };

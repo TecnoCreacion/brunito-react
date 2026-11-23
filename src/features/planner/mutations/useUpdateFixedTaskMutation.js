@@ -9,17 +9,29 @@ export const useUpdateFixedTaskMutation = (userId) => {
         // 🚀 Capa de Servicio: La mutación no sabe de Axios ni de URLs, solo delega al servicio.
         mutationFn: ({ id, data }) => plannerService.updateFixedTask(id, data),
 
-        onSuccess: () => {
+        onSuccess: async () => {
             // 🚀 Invalidación inteligente: "Invalidar únicamente lo necesario"
-            // Forzamos la recarga del SidebarWidget
-            queryClient.invalidateQueries({
-                queryKey: plannerKeys.fixedTasks.all(userId),
-            });
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: plannerKeys.getPlanners(),
+                }),
 
-            // Si la tarea fija tiene impacto visual en el calendario, también invalidamos los eventos
-            queryClient.invalidateQueries({
-                queryKey: plannerKeys.events.allByUser(userId),
-            });
+                queryClient.invalidateQueries({
+                    queryKey: plannerKeys.fixedTasks.all(userId),
+                }),
+
+                queryClient.invalidateQueries({
+                    queryKey: plannerKeys.events.all(),
+                }),
+
+                queryClient.invalidateQueries({
+                    queryKey: plannerKeys.detail(userId),
+                }),
+
+                queryClient.invalidateQueries({
+                    queryKey: plannerKeys.tags(),
+                }),
+            ]);
         },
 
         onError: (error) => {

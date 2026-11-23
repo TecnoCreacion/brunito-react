@@ -2,6 +2,7 @@ export const Button = ({
     ref,
     children,
     variant = "primary", // primario por defecto
+    outline = false,
     size,
     loading = false,
     disabled = false,
@@ -13,7 +14,7 @@ export const Button = ({
 }) => {
     // Clases base de Tabler/Bootstrap 5
     const baseClass = "btn";
-    const variantClass = variant ? `btn-${variant}` : "";
+    const variantClass = variant ? `btn-${outline ? "outline-" : ""}${variant}` : "";
     const sizeClass = size ? `btn-${size}` : "";
     const widthClass = fullWidth ? "w-100" : "";
 

@@ -56,6 +56,23 @@ export const plannerService = {
         return plannerCalendarAdapter(rawData);
     },
 
+    delete: async (plannerId) => {
+        const response = await apiClient.delete(`${plannerApi.delete}/${plannerId}`);
+        const rawData = response.data.data || response.data;
+
+        return rawData;
+    },
+
+    reorderEvents: async ({ dateKey, orderedIds }) => {
+        const response = await apiClient.put(`${plannerApi.reorderEvents}`, {
+            date: dateKey,
+            ordered_ids: orderedIds,
+        });
+        const rawData = response.data.data || response.data;
+
+        return rawData;
+    },
+
     /**
      * Obtiene las tareas fijas del mes adaptadas para la SidebarWidget.
      */

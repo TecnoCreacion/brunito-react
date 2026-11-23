@@ -2,6 +2,7 @@
 .planner-calendar-container .rbc-month-view {
     height: auto !important;
     min-height: auto;
+    overflow: visible !important;
 }
 
 /* Cada fila semanal se adapta automáticamente al alto real de las tarjetas visibles en esa semana */
@@ -10,6 +11,7 @@
     min-height: 115px !important;
     height: auto !important;
     overflow: visible !important;
+    position: relative;
 }
 
 .planner-calendar-container .rbc-row-content {
@@ -36,4 +38,279 @@
 .planner-calendar-container .rbc-event.planner-show-more-event:hover {
     background-color: var(--tblr-primary) !important;
     color: #ffffff !important;
+}
+
+/* Línea de tiempo vertical para la vista Agenda */
+.planner-vertical-timeline {
+    position: relative;
+    padding-left: 2.25rem;
+}
+
+.planner-vertical-timeline::before {
+    content: "";
+    position: absolute;
+    left: 11px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background-color: var(--tblr-border-color, #cbd5e1);
+}
+
+.planner-timeline-item {
+    position: relative;
+    padding-bottom: 1.75rem;
+}
+
+.planner-timeline-item:last-child {
+    padding-bottom: 0.25rem;
+}
+
+.planner-timeline-dot {
+    position: absolute;
+    left: -2.25rem;
+    top: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 4px solid var(--tblr-primary);
+    box-shadow: 0 0 0 4px var(--tblr-bg-surface, #ffffff);
+    z-index: 1;
+}
+
+.planner-timeline-dashed-divider {
+    border-bottom: 1.5px dashed var(--tblr-border-color-translucent, #cbd5e1);
+    margin-left: 0.5rem;
+}
+
+.planner-empty-day-btn {
+    border-style: dashed !important;
+    transition: all 0.15s ease-in-out;
+}
+
+.planner-empty-day-btn:hover {
+    background-color: var(--tblr-primary-lt);
+    border-color: var(--tblr-primary) !important;
+    color: var(--tblr-primary) !important;
+}
+
+/* Hover limpio para pestaña de semana en vista Mes */
+.planner-week-gutter {
+    background-color: var(--tblr-bg-surface-secondary, #f8fafc);
+    transition: background-color 0.2s ease;
+}
+
+.planner-week-gutter:hover {
+    background-color: var(--tblr-primary-lt);
+}
+
+/* Botón "Agregar tarea" en línea de tiempo semanal (Agenda) */
+.planner-add-task-btn {
+    background-color: transparent;
+    border: 1px dashed var(--tblr-border-color, #cbd5e1);
+    color: var(--tblr-secondary, #64748b);
+    font-weight: 500;
+    transition:
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        color 0.15s ease-in-out;
+}
+
+.planner-add-task-btn:hover,
+.planner-add-task-btn:focus-visible {
+    background-color: var(--tblr-bg-surface-secondary, #f1f5f9);
+    border-color: var(--tblr-border-color-active, #94a3b8);
+    color: var(--tblr-body-color, #1e293b);
+    box-shadow: none;
+}
+
+.planner-add-task-btn:active {
+    background-color: var(--tblr-border-color-translucent, #e2e8f0);
+    color: var(--tblr-body-color, #1e293b);
+}
+
+/* Variable única para el ancho de la pestaña semanal en vista Mes */
+.planner-calendar-container {
+    --planner-week-tab-width: 24px;
+}
+
+/* Mantiene el modelo de caja estricto en la cuadrícula mensual para evitar descuadres */
+.planner-calendar-container .rbc-month-view .rbc-day-bg {
+    box-sizing: border-box;
+    padding-left: 0 !important;
+}
+
+/* Reserva visual en la celda de fondo del Lunes (primera columna en locale 'es' con dow: 1) */
+.planner-calendar-container .rbc-month-view .rbc-month-row .rbc-day-bg:first-child {
+    padding-left: var(--planner-week-tab-width);
+}
+
+/* Pestaña lateral de número de semana (columna izquierda del Lunes) */
+.planner-week-tab {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--planner-week-tab-width);
+    cursor: pointer;
+    z-index: 4;
+    background-color: var(--tblr-bg-surface-secondary, #f8fafc);
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.planner-week-tab:hover {
+    background-color: var(--tblr-primary-lt);
+}
+
+/* Ajusta el evento del Lunes dentro de su propia celda sin empujarlo hacia el Martes */
+.planner-calendar-container .rbc-month-view .rbc-event.planner-monday-event {
+    margin-left: calc(var(--planner-week-tab-width) + 2px);
+    width: calc(100% - var(--planner-week-tab-width) - 4px);
+    box-sizing: border-box;
+}
+
+/* Jerarquía visual por estado temporal del evento (Hoy vs Futuro vs Pasado) */
+.planner-calendar-container .rbc-event.planner-event-item {
+    border-radius: 4px;
+    font-size: 0.8rem;
+    transition:
+        filter 0.15s ease,
+        opacity 0.15s ease,
+        transform 0.15s ease;
+}
+
+/* 1. EVENTOS DE HOY: Máximo contraste y brillo corporativo */
+.planner-calendar-container .rbc-event.planner-event--today {
+    background-color: var(--event-color);
+    border-color: var(--event-color);
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* 2. EVENTOS FUTUROS: Tono suave (-lt) de Tabler UI para evitar fatiga visual con >40 tareas */
+.planner-calendar-container .rbc-event.planner-event--future {
+    background-color: var(--event-color-lt);
+    border: 1px solid var(--event-color-lt);
+    border-left: 3px solid var(--event-color);
+    color: var(--event-color);
+}
+
+.planner-calendar-container .rbc-event.planner-event--future:hover {
+    filter: brightness(0.96);
+}
+
+/* 3. EVENTOS PASADOS: Tono pastel atenuado con menor peso visual */
+.planner-calendar-container .rbc-event.planner-event--past {
+    background-color: var(--event-color-lt);
+    border: 1px solid transparent;
+    border-left: 3px solid var(--event-color);
+    color: var(--tblr-secondary, #64748b);
+    opacity: 0.72;
+}
+
+.planner-calendar-container .rbc-event.planner-event--past:hover {
+    opacity: 0.95;
+}
+
+/* Vista Semana: Evita que eventos adyacentes fuercen la altura de los demás */
+.planner-calendar-container .rbc-time-view .rbc-day-slot .rbc-event {
+    min-height: 28px;
+    box-sizing: border-box;
+}
+
+/* Drag & Drop y Cursores: Solo cambia al presionar "Ordenar" o sobre el botón de 3 puntos */
+.planner-draggable-item {
+    cursor: default;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        opacity 0.15s ease;
+}
+
+/* Botón de 3 puntos verticales en esquina superior derecha (Escritorio) */
+.planner-event-kebab-btn {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.planner-event-kebab-btn:hover {
+    background-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Cruz de 4 flechas: SOLO cuando está activo el modo "Ordenar" o se está arrastrando */
+.planner-draggable-item.is-ordering-mode,
+.planner-draggable-item.is-ordering-mode:active,
+.planner-draggable-item.is-dragging {
+    cursor: move !important;
+    user-select: none;
+}
+
+.planner-draggable-item.is-ordering-mode {
+    outline: 2px dashed var(--tblr-warning);
+    outline-offset: -2px;
+}
+
+.planner-draggable-item.is-dragging {
+    opacity: 0.55;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
+}
+
+.planner-draggable-item.is-drag-over {
+    border-top: 2px dashed var(--tblr-primary) !important;
+}
+
+/* Opacidad permanente en todas las etiquetas */
+.planner-tag-badge {
+    opacity: 0.78;
+    transition: opacity 0.15s ease;
+}
+
+.planner-tag-badge--dimmed {
+    opacity: 0.42;
+}
+
+/* Mejora respuesta táctil en móvil evitando que los badges intercepten el toque */
+@media (max-width: 767px) {
+    .planner-mobile-card-tap .planner-tag-badge {
+        pointer-events: none;
+    }
+}
+
+/* ============================================================================
+   CONTEXTO DE APILAMIENTO Y DESBORDAMIENTO PARA EVENTACTIONDROPDOWN
+   Evita recortes horizontales, verticales o por filas semanales inferiores
+   ============================================================================ */
+.planner-calendar-container:has(.has-open-menu),
+.planner-calendar-container .rbc-calendar:has(.has-open-menu),
+.planner-calendar-container .rbc-time-view:has(.has-open-menu),
+.planner-calendar-container .rbc-time-content:has(.has-open-menu),
+.planner-calendar-container .rbc-day-slot:has(.has-open-menu),
+.planner-calendar-container .rbc-events-container:has(.has-open-menu) {
+    overflow: visible !important;
+}
+
+/* Eleva toda la fila semanal activa por encima de las semanas siguientes */
+.planner-calendar-container .rbc-month-row:has(.has-open-menu),
+.planner-calendar-container .rbc-row-content:has(.has-open-menu),
+.planner-calendar-container .rbc-row-segment:has(.has-open-menu) {
+    overflow: visible !important;
+    z-index: 1060 !important;
+    position: relative;
+}
+
+/* Libera el evento activo y su contenedor interno .rbc-event-content */
+.planner-calendar-container .rbc-event.has-open-menu,
+.planner-calendar-container .rbc-event.has-open-menu .rbc-event-content,
+.planner-calendar-container .rbc-day-slot .rbc-event.has-open-menu {
+    overflow: visible !important;
+    z-index: 1065 !important;
 }
