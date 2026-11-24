@@ -5,8 +5,8 @@ import { PrivateRoute } from "./guards/PrivateRoute";
 import { PublicRoute } from "./guards/PublicRoute";
 import { authRoutes } from "@/features/auth/routes/authRoutes";
 import { HomePage } from "@/features/landing/pages/HomePage";
-import { PlannerPage } from "@/features/planner";
-import { plannersRoutes } from "@/features/planner/routes/plannersRoutes";
+import { PlannerPage } from "@/features/planners";
+import { plannersRoutes } from "@/features/planners/routes/plannersRoutes";
 import { notebooksRoutes } from "@/features/notebooks";
 
 export const routeConfig = [

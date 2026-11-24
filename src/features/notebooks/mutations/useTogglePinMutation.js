@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { notebooksKeys } from "../keys/notebooksKeys";
+import { notebooksKeys } from "../queries/notebooksKeys";
 import { notebooksService } from "../services/notebooksService";
 import { alerts } from "@/shared/utils/alerts"; // Asumiendo que usas este helper corporativo
 

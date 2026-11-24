@@ -6,7 +6,7 @@ import { NotebookBoard } from "../components/NotebookBoard";
 import { NotebookDetailModal } from "../components/NotebookDetailModal";
 import { TrashedNotebooksCarousel } from "../components/TrashedNotebooksCarousel";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { useAuth } from "@/features/auth/contexts/AuthContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { alerts } from "@/shared/utils/alerts";
 
 export const NotebooksPage = () => {

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { notebooksService } from "../services/notebooksService";
-import { notebooksKeys } from "../keys/notebooksKeys";
+import { notebooksKeys } from "./notebooksKeys";
 
 export const useTrashedNotebooksQuery = ({ userId = null, enabled = false } = {}) => {
     return useQuery({

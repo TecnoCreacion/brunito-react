@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { notesService } from "../services/notesService";
-import { notebooksKeys } from "../keys/notebooksKeys";
+import { notebooksKeys } from "../queries/notebooksKeys";
 
 export const useCreateNoteMutation = () => {
     const queryClient = useQueryClient();

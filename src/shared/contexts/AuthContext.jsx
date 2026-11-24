@@ -1,8 +1,8 @@
 import { createContext, useContext, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLogoutMutation } from "../mutations/useLogoutMutation";
-import { authService } from "../services/authService";
-import { authKeys } from "../queries/authKeys";
+import { useLogoutMutation } from "@/features/auth/mutations/useLogoutMutation";
+import { authService } from "@/features/auth/services/authService";
+import { authKeys } from "@/features/auth/queries/authKeys";
 
 export const AuthContext = createContext(null);
 
