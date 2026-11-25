@@ -1,12 +1,13 @@
 import { AppLayout } from "@/layouts/AppLayout/AppLayout";
 import { PublicLayout } from "@/layouts/PublicLayout/PublicLayout";
 import { AuthLayout } from "@/layouts/AuthLayout";
+import { HomePage } from "@/features/landing/pages/HomePage";
 import { PrivateRoute } from "./guards/PrivateRoute";
 import { PublicRoute } from "./guards/PublicRoute";
-import { authRoutes } from "@/features/auth/routes/authRoutes";
-import { HomePage } from "@/features/landing/pages/HomePage";
+import { authRoutes } from "@/features/auth";
+import { usersRoutes } from "@/features/auth";
 import { PlannerPage } from "@/features/planners";
-import { plannersRoutes } from "@/features/planners/routes/plannersRoutes";
+import { plannersRoutes } from "@/features/planners";
 import { notebooksRoutes } from "@/features/notebooks";
 
 export const routeConfig = [
@@ -21,6 +22,7 @@ export const routeConfig = [
                         path: "/dashboard",
                         element: <PlannerPage />,
                     },
+                    ...usersRoutes,
                     ...plannersRoutes,
                     ...notebooksRoutes,
                 ],
