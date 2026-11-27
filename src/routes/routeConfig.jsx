@@ -1,11 +1,11 @@
 import { AppLayout } from "@/layouts/AppLayout/AppLayout";
 import { PublicLayout } from "@/layouts/PublicLayout/PublicLayout";
-import { AuthLayout } from "@/layouts/AuthLayout";
+import { AuthLayout } from "@/layouts/AuthLayout/AuthLayout";
 import { HomePage } from "@/features/landing/pages/HomePage";
 import { PrivateRoute } from "./guards/PrivateRoute";
 import { PublicRoute } from "./guards/PublicRoute";
 import { authRoutes } from "@/features/auth";
-import { usersRoutes } from "@/features/auth";
+import { usersRoutes } from "@/features/users";
 import { PlannerPage } from "@/features/planners";
 import { plannersRoutes } from "@/features/planners";
 import { notebooksRoutes } from "@/features/notebooks";

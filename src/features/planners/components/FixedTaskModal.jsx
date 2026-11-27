@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { Modal } from "@/shared/components/Modal/Modal";
-// 🚀 ARQUITECTURA: Importamos el botón corporativo del Design System[cite: 5]
 import { Button } from "@/shared/components/Button";
-import { IconBriefcase, IconCalendarDollar, IconArrowRight, IconArrowLeft, IconCheck, IconClock, IconBook2, IconPlus, IconTrash, IconTags } from "@tabler/icons-react";
+import { IconBriefcase, IconCalendarDollar, IconArrowRight, IconArrowLeft, IconCheck, IconClock, IconBook2, IconPlus, IconTrash, IconTags, IconX } from "@tabler/icons-react";
 import { useFixedTaskForm } from "../hooks/useFixedTaskForm";
 
 const WEEK_DAYS = [
@@ -14,27 +14,55 @@ const WEEK_DAYS = [
     { id: 7, label: "D" },
 ];
 
-// 🚀 ARQUITECTURA: Recibimos isSaving (el isPending de TanStack Query en el componente padre)
+const TAG_COLOR_OPTIONS = [
+    { value: "primary", label: "Azul" },
+    { value: "success", label: "Verde" },
+    { value: "warning", label: "Amarillo" },
+    { value: "danger", label: "Rojo" },
+    { value: "info", label: "Celeste" },
+    { value: "purple", label: "Morado" },
+    { value: "secondary", label: "Gris" },
+];
+
 export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags = [], onSave, initialData = null, isSaving = false }) => {
-    const { formData, step, handleChange, handleAddSchedule, handleRemoveSchedule, handleScheduleChange, handleToggleDay, handleNextStep, handleReset, handleSubmit, setStep, isEditing, tagInput, setTagInput, handleAddTag, handleRemoveTag } = useFixedTaskForm(initialData, isOpen, (data) => {
-        // 🚀 CORRECCIÓN: Solo emitimos los datos.
-        // Eliminamos el handleClose() síncrono. El padre cerrará el modal en su onSuccess.
-        onSave(data);
+    const [tagInput, setTagInput] = useState("");
+    const [tagColor, setTagColor] = useState("primary");
+
+    const { formData, step, setStep, handleChange, handleAddSchedule, handleRemoveSchedule, handleScheduleChange, handleToggleDay, handleNextStep, unselectedSuggestions, handleAddTag, handleRemoveTag, handleReset, handleSubmit, isEditing } = useFixedTaskForm({
+        initialData,
+        isOpen,
+        availableTags,
+        onSubmitCallback: (payload) => onSave(payload),
     });
 
     const handleClose = () => {
+        setTagInput("");
+        setTagColor("primary");
         handleReset();
         onClose();
     };
 
-    const unselectedSuggestions = availableTags.filter((t) => !(formData.tags || []).includes(t));
+    const onAddTagClick = (tagValue) => {
+        if (!tagValue || isSaving) return;
+
+        if (typeof tagValue === "object") {
+            handleAddTag(tagValue);
+        } else {
+            const cleanName = tagValue.trim();
+            if (!cleanName) return;
+            handleAddTag({ name: cleanName, color: tagColor });
+        }
+
+        setTagInput("");
+        setTagColor("primary");
+    };
 
     return (
         <Modal isOpen={isOpen} onClose={handleClose} title={isEditing ? "Editar Tarea Recurrente" : "Configurar Tarea Recurrente"} size="lg">
             <form onSubmit={handleSubmit} className="d-flex flex-column flex-grow-1 overflow-hidden">
                 <div className="modal-body p-0 overflow-y-auto">
                     <div className="progress progress-sm rounded-0">
-                        <div className={`progress-bar ${step === 1 ? "w-50" : "w-100"} transition-all bg-primary`}></div>
+                        <div className={`progress-bar ${step === 1 ? "w-50" : "w-100"} transition-all bg-primary`} />
                     </div>
 
                     <div className="p-4 p-md-5">
@@ -68,9 +96,9 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                 </div>
 
                                 <div className="mt-5">
-                                    <button type="button" className="btn btn-primary rounded-pill px-5" disabled={!formData.recurrence_type || isSaving} onClick={handleNextStep}>
+                                    <Button type="button" variant="primary" className="rounded-pill px-5" disabled={!formData.recurrence_type || isSaving} onClick={handleNextStep}>
                                         Continuar <IconArrowRight size={16} className="ms-2" />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         )}
@@ -91,7 +119,6 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                         <input type="text" className="form-control bg-light border-0" placeholder="Ej: Turno Mañana" value={formData.title} onChange={(e) => handleChange("title", e.target.value)} disabled={isSaving} required />
                                     </div>
 
-                                    {/* 🚀 HORARIO LABORAL MULTIPLE */}
                                     {formData.recurrence_type === "work_shift" && (
                                         <div className="col-12">
                                             <div className="d-flex justify-content-between align-items-center mb-3">
@@ -146,7 +173,6 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                         </div>
                                     )}
 
-                                    {/* ...HITO MENSUAL... */}
                                     {formData.recurrence_type === "monthly_reminder" && (
                                         <div className="col-12">
                                             <div className="card border-0 bg-success-subtle rounded-3 p-4">
@@ -169,7 +195,6 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                         </div>
                                     )}
 
-                                    {/* ...COMUNES... */}
                                     <div className="col-12">
                                         <label className="form-label text-muted d-flex align-items-center gap-2">
                                             <IconBook2 size={16} /> Vincular a Libreta (Opcional)
@@ -184,11 +209,16 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                         </select>
                                     </div>
 
+                                    {/* Etiquetas con selector de color en la misma línea */}
                                     <div className="col-12 mt-4 pt-3 border-top">
                                         <label className="form-label text-muted d-flex align-items-center gap-2">
                                             <IconTags size={16} /> Etiquetas (Tags)
                                         </label>
+
                                         <div className="input-group mb-2 shadow-sm">
+                                            <span className="input-group-text bg-white">
+                                                <span className={`badge bg-${tagColor} p-1`} aria-hidden="true" />
+                                            </span>
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -198,36 +228,51 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                                                 onKeyDown={(e) => {
                                                     if (e.key === "Enter") {
                                                         e.preventDefault();
-                                                        handleAddTag(tagInput);
+                                                        onAddTagClick(tagInput);
                                                     }
                                                 }}
                                                 disabled={isSaving}
                                             />
-                                            <button type="button" className="btn btn-outline-secondary" onClick={() => handleAddTag(tagInput)} disabled={isSaving || !tagInput.trim()}>
+                                            <select className="form-select" style={{ maxWidth: "130px" }} value={tagColor} onChange={(e) => setTagColor(e.target.value)} disabled={isSaving} aria-label="Color de etiqueta">
+                                                {TAG_COLOR_OPTIONS.map((opt) => (
+                                                    <option key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <button type="button" className="btn btn-outline-secondary" onClick={() => onAddTagClick(tagInput)} disabled={isSaving || !tagInput.trim()}>
                                                 Agregar
                                             </button>
                                         </div>
 
-                                        {/* Sugerencias Inteligentes */}
+                                        {/* Sugerencias con color */}
                                         {unselectedSuggestions.length > 0 && (
                                             <div className="d-flex flex-wrap gap-1 mb-3">
                                                 <span className="text-muted small me-2 align-self-center">Sugerencias:</span>
                                                 {unselectedSuggestions.map((t) => (
-                                                    <span key={t} className={`badge bg-secondary-lt transition-colors ${isSaving ? "opacity-50" : "cursor-pointer hover:bg-secondary hover:text-white"}`} onClick={() => !isSaving && handleAddTag(t)}>
-                                                        + {t}
+                                                    <span key={t.id} className={`badge bg-${t.color || "primary"}-lt transition-colors d-flex align-items-center gap-1 ${isSaving ? "opacity-50" : "cursor-pointer hover-shadow-sm"}`} onClick={() => onAddTagClick(t)}>
+                                                        <IconPlus size={12} stroke={3} /> {t.name}
                                                     </span>
                                                 ))}
                                             </div>
                                         )}
 
-                                        {/* Etiquetas Seleccionadas */}
+                                        {/* Etiquetas Seleccionadas con color */}
                                         <div className="d-flex flex-wrap gap-2 mt-2">
                                             {(!formData.tags || formData.tags.length === 0) && <span className="text-muted small">No hay etiquetas seleccionadas.</span>}
-                                            {formData.tags?.map((tag) => (
-                                                <span key={tag.id || tag} className="badge bg-primary text-white d-flex align-items-center gap-2 px-2 py-1" style={{ fontSize: "0.85rem" }}>
-                                                    {tag.name || tag}
-                                                    <span className="opacity-75 hover:opacity-100 transition-opacity" style={{ cursor: isSaving ? "not-allowed" : "pointer", paddingLeft: "4px" }} onClick={() => !isSaving && handleRemoveTag(tag)} title="Quitar etiqueta">
-                                                        &times;
+
+                                            {formData.tags?.map((tag, index) => (
+                                                <span key={tag.id || `${tag.name}-${index}`} className={`badge bg-${tag.color || "primary"} text-white d-flex align-items-center gap-2 p-2 shadow-sm`}>
+                                                    {tag.name}
+                                                    <span
+                                                        style={{
+                                                            cursor: isSaving ? "not-allowed" : "pointer",
+                                                            opacity: 0.85,
+                                                        }}
+                                                        onClick={() => !isSaving && handleRemoveTag(tag)}
+                                                        title="Quitar etiqueta"
+                                                    >
+                                                        <IconX size={14} />
                                                     </span>
                                                 </span>
                                             ))}
@@ -245,8 +290,6 @@ export const FixedTaskModal = ({ isOpen, onClose, notebooks = [], availableTags 
                             Cancelar
                         </button>
 
-                        {/* 🚀 ARQUITECTURA: Reemplazado por el componente <Button> corporativo
-                            Delega el estado de "Guardando..." y bloqueo al Design System[cite: 5] */}
                         <Button type="submit" variant="primary" loading={isSaving} className="rounded-pill px-4 shadow-sm">
                             {!isSaving && <IconCheck size={16} className="me-2" />}
                             {isEditing ? "Actualizar Tarea" : "Guardar Configuración"}

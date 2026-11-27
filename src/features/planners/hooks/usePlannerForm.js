@@ -140,23 +140,33 @@ export const usePlannerForm = ({ initialData, selectedDate, userId, onClose }) =
 
     // 4. Agregar etiqueta aceptando tanto string manual como objeto seleccionado
     const handleAddTag = (tagInput) => {
-        const normalized = toFrontendTag(tagInput);
-        if (!normalized) return;
+        const normalizedTag = typeof tagInput === "string" ? { name: tagInput.trim(), color: "primary" } : { ...tagInput, name: tagInput.name.trim(), color: tagInput.color || "primary" };
 
-        setTags((prev) => {
-            const alreadySelected = prev.some((t) => t.name.toLowerCase() === normalized.name.toLowerCase());
-            if (alreadySelected) return prev;
+        if (!normalizedTag.name) return;
 
-            // Si el usuario escribió manualmente el nombre de una etiqueta que ya existía en BD, heredamos su color e ID
-            const existingFromCatalog = Array.isArray(userSavedTags) ? userSavedTags.map(toFrontendTag).find((t) => t?.name.toLowerCase() === normalized.name.toLowerCase()) : null;
+        const alreadyExists = tags.some((t) => t.name.toLowerCase() === normalizedTag.name.toLowerCase());
+        if (alreadyExists) return;
 
-            return [...prev, existingFromCatalog || normalized];
-        });
+        // Si coincide con un tag existente en availableTags, hereda su id y color si no se forzó otro
+        const existingMatch = availableTags.find((t) => t.name.toLowerCase() === normalizedTag.name.toLowerCase());
+
+        setTags((prev) => [...prev, existingMatch ? { ...existingMatch, color: existingMatch.color || normalizedTag.color } : { id: `temp-${Date.now()}`, ...normalizedTag }]);
     };
 
     const handleRemoveTag = (tagToRemove) => {
-        const targetName = toFrontendTag(tagToRemove)?.name.toLowerCase();
-        setTags((prev) => prev.filter((t) => t.name.toLowerCase() !== targetName));
+        const normalized = toFrontendTag(tagToRemove);
+        if (!normalized) return;
+
+        const targetName = normalized.name.toLowerCase();
+
+        setTags((prev) =>
+            prev.filter((t) => {
+                if (typeof t.id === "number" && typeof normalized.id === "number") {
+                    return t.id !== normalized.id;
+                }
+                return t.name.toLowerCase() !== targetName;
+            }),
+        );
     };
 
     const handleSubmit = async (e) => {
@@ -180,7 +190,10 @@ export const usePlannerForm = ({ initialData, selectedDate, userId, onClose }) =
             end_date: formattedEndDate,
             all_day: isAllDay,
             // Enviamos los nombres normalizados que espera tu endpoint de sincronización en Laravel
-            tags: tags.map((t) => t.name.toLowerCase()),
+            tags: tags.map((t) => ({
+                name: t.name.trim().toLowerCase(),
+                color: t.color || "primary",
+            })),
         };
 
         try {

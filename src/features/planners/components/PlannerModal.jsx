@@ -66,7 +66,18 @@ const PlannerModalFetcher = ({ onClose, selectedDate, plannerId, userId }) => {
 // CAPA 3: COMPONENTE PRESENTACIONAL (El Formulario)
 // -------------------------------------------------------------------------
 const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
+    const TAG_COLOR_OPTIONS = [
+        { value: "primary", label: "Azul" },
+        { value: "success", label: "Verde" },
+        { value: "warning", label: "Amarillo" },
+        { value: "danger", label: "Rojo" },
+        { value: "info", label: "Celeste" },
+        { value: "purple", label: "Morado" },
+        { value: "secondary", label: "Gris" },
+    ];
+
     const [tagInput, setTagInput] = useState("");
+    const [tagColor, setTagColor] = useState("primary");
     const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
     const { mutate: deletePlannerEvent, isPending: isDeleting } = useDeletePlannerMutation(userId);
@@ -82,8 +93,18 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
 
     const onAddTagClick = (tagValue) => {
         if (!tagValue) return;
-        handleAddTag(tagValue);
+
+        // Si viene desde "Disponibles" (ya es un objeto con id, name y color)
+        if (typeof tagValue === "object") {
+            handleAddTag(tagValue);
+        } else {
+            const cleanName = tagValue.trim();
+            if (!cleanName) return;
+            handleAddTag({ name: cleanName, color: tagColor });
+        }
+
         setTagInput("");
+        setTagColor("primary"); // Reinicia a azul tras agregar
     };
 
     const handleConfirmDelete = () => {
@@ -163,6 +184,9 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                         <label className="form-label">Etiquetas (Tags)</label>
 
                         <div className="input-group mb-2">
+                            <span className="input-group-text bg-white">
+                                <span className={`badge bg-${tagColor} p-1`} aria-hidden="true" />
+                            </span>
                             <input
                                 type="text"
                                 className="form-control"
@@ -177,6 +201,13 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                                 }}
                                 disabled={isBusy}
                             />
+                            <select className="form-select" style={{ maxWidth: "130px" }} value={tagColor} onChange={(e) => setTagColor(e.target.value)} disabled={isBusy} aria-label="Color de etiqueta">
+                                {TAG_COLOR_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
                             <button type="button" className="btn btn-outline-secondary" onClick={() => onAddTagClick(tagInput)} disabled={isBusy || !tagInput.trim()}>
                                 Agregar
                             </button>
@@ -186,7 +217,7 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                             <div className="d-flex flex-wrap gap-1 mb-3">
                                 <span className="text-muted small me-2 align-self-center">Disponibles:</span>
                                 {availableTags.map((t) => (
-                                    <span key={t.id} className={`badge bg-${t.color}-lt cursor-pointer transition-colors hover-shadow-sm d-flex align-items-center gap-1`} onClick={() => onAddTagClick(t)}>
+                                    <span key={t.id} className={`badge bg-${t.color || "primary"}-lt cursor-pointer transition-colors hover-shadow-sm d-flex align-items-center gap-1`} onClick={() => onAddTagClick(t)}>
                                         <IconPlus size={12} stroke={3} /> {t.name}
                                     </span>
                                 ))}
@@ -196,8 +227,8 @@ const PlannerModalForm = ({ initialData, selectedDate, userId, onClose }) => {
                         <div className="d-flex flex-wrap gap-2 mt-2">
                             {tags.length === 0 && <span className="text-muted small">No hay etiquetas seleccionadas.</span>}
 
-                            {tags.map((tag) => (
-                                <span key={tag.id} className={`badge bg-${tag.color || "primary"} text-white d-flex align-items-center gap-2 p-2 shadow-sm`}>
+                            {tags.map((tag, index) => (
+                                <span key={tag.id || `${tag.name}-${index}`} className={`badge bg-${tag.color || "primary"} text-white d-flex align-items-center gap-2 p-2 shadow-sm`}>
                                     {tag.name}
                                     <span style={{ cursor: "pointer", opacity: 0.8 }} onClick={() => handleRemoveTag(tag)} title="Eliminar">
                                         <IconX size={14} />

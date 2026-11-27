@@ -139,11 +139,6 @@
     padding-left: 0 !important;
 }
 
-/* Reserva visual en la celda de fondo del Lunes (primera columna en locale 'es' con dow: 1) */
-.planner-calendar-container .rbc-month-view .rbc-month-row .rbc-day-bg:first-child {
-    padding-left: var(--planner-week-tab-width);
-}
-
 /* Pestaña lateral de número de semana (columna izquierda del Lunes) */
 .planner-week-tab {
     position: absolute;
@@ -313,4 +308,60 @@
 .planner-calendar-container .rbc-day-slot .rbc-event.has-open-menu {
     overflow: visible !important;
     z-index: 1065 !important;
+}
+
+/* Oculta la capa de filas compartidas de RBC solo en vista Mes */
+.planner-calendar-container .rbc-month-view .rbc-row-content {
+    display: none !important;
+}
+
+/* Libera el contenedor principal del calendario y la vista mensual */
+.planner-calendar-container .rbc-calendar,
+.planner-calendar-container .rbc-month-view {
+    display: block !important;
+    height: auto !important;
+    min-height: auto !important;
+}
+
+/* Permite que la fila semanal crezca con su contenido (anula flex: 1 0 0%) */
+.planner-calendar-container .rbc-month-view .rbc-month-row {
+    display: block !important;
+    flex: none !important;
+    height: auto !important;
+    min-height: 120px !important;
+    overflow: visible !important;
+}
+
+/* Devuelve la fila de celdas diarias al flujo normal para que empuje la altura de la semana */
+.planner-calendar-container .rbc-month-view .rbc-row-bg {
+    position: relative !important;
+    inset: auto !important;
+    display: flex !important;
+    align-items: stretch !important;
+    flex: none !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 120px !important;
+}
+
+/* Convierte cada celda de día en una columna vertical independiente */
+.planner-calendar-container .rbc-month-view .rbc-day-bg {
+    flex: 1 1 0% !important;
+    min-width: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 120px !important;
+    padding: 4px !important;
+    overflow: visible !important;
+}
+
+/* Mantiene el espacio para la pestaña de número de semana en Lunes */
+.planner-calendar-container .rbc-month-view .rbc-month-row .rbc-day-bg:first-child {
+    padding-left: calc(var(--planner-week-tab-width) + 4px) !important;
+}
+
+/* Eleva la celda diaria cuando tiene un menú desplegable abierto para que no lo tape el día de al lado */
+.planner-calendar-container .rbc-month-view .rbc-day-bg:has(.has-open-menu) {
+    z-index: 1060 !important;
 }

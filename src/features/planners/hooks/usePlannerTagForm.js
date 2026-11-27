@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useCreateTagMutation, useUpdateTagMutation } from "../mutations/usePlannerTagMutations";
+import { useCreatePlannerTagMutation } from "../mutations/useCreatePlannerTagMutation";
+import { useUpdatePlannerTagMutation } from "../mutations/useUpdatePlannerTagMutation";
 
 export const TAG_COLOR_OPTIONS = [
     { value: "primary", label: "Azul (Primario)" },
@@ -18,8 +19,8 @@ export const usePlannerTagForm = ({ initialData = null, isOpen, onClose }) => {
     const [color, setColor] = useState("primary");
     const [errors, setErrors] = useState({});
 
-    const { mutateAsync: createTag, isPending: isCreating } = useCreateTagMutation();
-    const { mutateAsync: updateTag, isPending: isUpdating } = useUpdateTagMutation();
+    const { mutateAsync: createTag, isPending: isCreating } = useCreatePlannerTagMutation();
+    const { mutateAsync: updateTag, isPending: isUpdating } = useUpdatePlannerTagMutation();
 
     const isPending = isCreating || isUpdating;
 

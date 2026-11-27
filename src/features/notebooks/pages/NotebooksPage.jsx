@@ -8,6 +8,7 @@ import { TrashedNotebooksCarousel } from "../components/TrashedNotebooksCarousel
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { alerts } from "@/shared/utils/alerts";
+import { SectionLoader } from "@/shared/components/SectionLoader";
 
 export const NotebooksPage = () => {
     useDocumentTitle("Libretas y Notas");
@@ -135,10 +136,7 @@ export const NotebooksPage = () => {
             )}
 
             {isLoading ? (
-                <div className="card shadow-sm border-0 p-5 text-center text-muted">
-                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                    Cargando tablero de libretas...
-                </div>
+                <SectionLoader message="Cargando tablero de libretas..." /> // Loader de contenido
             ) : (
                 <NotebookBoard notebooks={notebooks} onDelete={handleDelete} deletingId={deletingId} onEdit={(notebook) => setSelectedNotebook(notebook)} onAddNote={(notebook) => setSelectedNotebook(notebook)} onUpdateSize={handleUpdateSize} onTogglePin={handleTogglePin} onEditNote={handleEditNote} onDeleteNote={handleDeleteNote} />
             )}

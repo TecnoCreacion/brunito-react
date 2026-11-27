@@ -85,7 +85,8 @@ const CalendarEventCard = ({ event, isMobile, selectedTags, isMenuOpen, onToggle
 };
 
 export const BigCalendarView = ({ events = [], resources = [], controls = {}, selectedTags = [], onSummaryEvent, onEditEvent, onOrderEvent, onDeleteEvent, onDateSelect, onWeekClick, onReorderDayEvents }) => {
-    const { currentDate = new Date(), currentView = "month", changeDate = () => {}, changeView = () => {}, currentLocale = "es", maxEvents = 2 } = controls;
+    const noop = () => {};
+    const { currentDate = new Date(), currentView = "month", changeDate = noop, changeView = noop, currentLocale = "es", maxEvents = 2 } = controls;
 
     const normalizedLocale = String(currentLocale).toLowerCase();
     const numericLimit = Number(maxEvents);
@@ -99,7 +100,7 @@ export const BigCalendarView = ({ events = [], resources = [], controls = {}, se
         if (isMobile && currentView !== "agenda") {
             changeView("agenda");
         }
-    }, [isMobile]);
+    }, [isMobile, currentView, changeView]);
 
     useEffect(() => {
         setOpenMenuEventId(null);
@@ -160,6 +161,27 @@ export const BigCalendarView = ({ events = [], resources = [], controls = {}, se
 
     const calendarGridKey = `${moment(currentDate).format("YYYY-MM")}-${currentView}-${isMobile ? "mobile" : "desktop"}`;
 
+    // Indexa los eventos por fecha (YYYY-MM-DD)
+    const eventsByDayMap = useMemo(() => {
+        const map = new Map();
+        if (!Array.isArray(events)) return map;
+
+        events.forEach((event) => {
+            const dayKey = moment(event.start).format("YYYY-MM-DD");
+            if (!map.has(dayKey)) {
+                map.set(dayKey, []);
+            }
+            map.get(dayKey).push(event);
+        });
+
+        // Ordena cronológicamente los eventos dentro de cada día independiente
+        map.forEach((dayEvents) => {
+            dayEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+        });
+
+        return map;
+    }, [events]);
+
     const customComponents = useMemo(
         () => ({
             header: ({ label }) => <div className="text-capitalize fw-bold py-1 text-secondary">{label}</div>,
@@ -187,32 +209,98 @@ export const BigCalendarView = ({ events = [], resources = [], controls = {}, se
             },
 
             dateCellWrapper: (props) => {
-                const isMonday = moment(props.value).isoWeekday() === 1;
-                const weekNumber = moment(props.value).isoWeek();
+                if (currentView !== "month") return props.children;
 
-                if (!isMonday || currentView !== "month") return props.children;
+                const cellMoment = moment(props.value);
+                const dayKey = cellMoment.format("YYYY-MM-DD");
+                const isMonday = cellMoment.isoWeekday() === 1;
+                const weekNumber = cellMoment.isoWeek();
+                const isCurrentMonth = cellMoment.month() === moment(currentDate).month();
+                const isToday = cellMoment.isSame(moment(), "day");
+
+                const allDayEvents = eventsByDayMap.get(dayKey) || [];
+                const visibleDayEvents = isUnlimited ? allDayEvents : allDayEvents.slice(0, numericLimit);
+                const hiddenCount = Math.max(0, allDayEvents.length - visibleDayEvents.length);
 
                 return React.cloneElement(props.children, { className: `${props.children.props.className} position-relative` }, [
-                    <div
-                        key="week-column"
-                        className="planner-week-tab d-flex align-items-center justify-content-center border-end"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (onWeekClick) onWeekClick(weekNumber, props.value);
-                        }}
-                        title={`Configurar Semana ${weekNumber}`}
-                    >
-                        <span className="text-muted fw-bold" style={{ fontSize: "0.7rem", writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
-                            S. {weekNumber}
+                    isMonday && (
+                        <div
+                            key="week-column"
+                            className="planner-week-tab d-flex align-items-center justify-content-center border-end"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (onWeekClick) onWeekClick(weekNumber, props.value);
+                            }}
+                            title={`Configurar Semana ${weekNumber}`}
+                        >
+                            <span className="text-muted fw-bold" style={{ fontSize: "0.7rem", writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
+                                S. {weekNumber}
+                            </span>
+                        </div>
+                    ),
+
+                    /* Número del día alineado a la derecha */
+                    <div key="day-header" className="text-end px-1 mb-1">
+                        <span style={{ fontSize: "0.85rem" }} className={`fw-bold ${isToday ? "badge bg-primary text-white" : isCurrentMonth ? "text-muted" : "text-muted opacity-50"}`}>
+                            {cellMoment.format("DD")}
                         </span>
                     </div>,
-                    props.children.props.children,
+
+                    /* Pila vertical independiente del día: cada tarjeta ocupa su propio alto sin afectar días vecinos */
+                    <div key="day-events-stack" className="d-flex flex-column gap-1 w-100">
+                        {visibleDayEvents.map((event) => {
+                            const eventStart = moment(event.start);
+                            const eventEnd = moment(event.end || event.start);
+                            const todayStart = moment().startOf("day");
+
+                            let temporalModifier = "planner-event--future";
+                            if (todayStart.isBetween(eventStart.clone().startOf("day"), eventEnd.clone().endOf("day"), null, "[]")) {
+                                temporalModifier = "planner-event--today";
+                            } else if (eventEnd.isBefore(todayStart)) {
+                                temporalModifier = "planner-event--past";
+                            }
+
+                            const themeColor = event.color || "primary";
+
+                            return (
+                                <div
+                                    key={event.id}
+                                    className={`rbc-event planner-event-item ${temporalModifier} ${openMenuEventId === event.id ? "has-open-menu" : ""}`}
+                                    style={{
+                                        "--event-color": `var(--tblr-${themeColor})`,
+                                        "--event-color-lt": `var(--tblr-${themeColor}-lt)`,
+                                        width: "100%",
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <CalendarEventCard event={event} isMobile={isMobile} selectedTags={selectedTags} isMenuOpen={openMenuEventId === event.id} onToggleMenu={(id) => setOpenMenuEventId((prev) => (prev === id ? null : id))} onCloseMenu={() => setOpenMenuEventId(null)} onSummaryEvent={onSummaryEvent} onEditEvent={onEditEvent} onOrderEvent={onOrderEvent} onDeleteEvent={onDeleteEvent} />
+                                </div>
+                            );
+                        })}
+
+                        {hiddenCount > 0 && (
+                            <button
+                                type="button"
+                                className="btn btn-sm planner-show-more-event w-100 text-center"
+                                style={{ fontSize: "0.74rem", lineHeight: "1.2" }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    changeDate(cellMoment.toDate());
+                                    changeView("day");
+                                }}
+                            >
+                                + {hiddenCount} más
+                            </button>
+                        )}
+                    </div>,
                 ]);
             },
         }),
-        [onWeekClick, selectedTags, currentView, isMobile, openMenuEventId, onSummaryEvent, onEditEvent, onOrderEvent, onDeleteEvent],
+        [onWeekClick, selectedTags, currentView, currentDate, isMobile, openMenuEventId, onSummaryEvent, onEditEvent, onOrderEvent, onDeleteEvent, changeDate, changeView, eventsByDayMap, isUnlimited, numericLimit],
     );
 
     const handleSelectEvent = (event) => {
@@ -232,7 +320,7 @@ export const BigCalendarView = ({ events = [], resources = [], controls = {}, se
                 key={calendarGridKey}
                 className="pb-1"
                 localizer={localizer}
-                events={visibleEvents}
+                events={currentView === "month" ? [] : visibleEvents}
                 showAllEvents={true}
                 dayLayoutAlgorithm="no-overlap"
                 resources={resources.length > 0 ? resources : null}

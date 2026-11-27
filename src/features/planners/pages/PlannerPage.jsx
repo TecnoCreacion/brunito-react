@@ -13,9 +13,10 @@ import { WeekTasksModal } from "../components/WeekTasksModal";
 import { PlannerTagFormModal } from "../components/PlannerTagFormModal";
 import { EventSummaryModal } from "../components/EventSummaryModal"; // Modal de solo lectura para "Resumen"
 
-import { FAB } from "@/shared/components/FAB/FAB";
-import { MiniCalendarPicker } from "@/shared/components/MiniCalendarPicker/MiniCalendarPicker";
-import { ConfirmDialog } from "@/shared/components/ConfirmDialog/ConfirmDialog";
+import { FAB } from "@/shared/components/FAB";
+import { MiniCalendarPicker } from "@/shared/components/MiniCalendarPicker";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
+import { SectionLoader } from "@/shared/components/SectionLoader";
 
 // Hooks y Mutaciones
 import { usePlanner } from "../hooks/usePlanner";
@@ -225,7 +226,7 @@ export const PlannerPage = () => {
 
                 <div className={isMobile ? "col-12" : "col-lg-10 col-md-9"}>
                     {isLoadingEvents ? (
-                        <div className="card shadow-sm border-0 p-5 text-center text-muted">Cargando agenda y recordatorios...</div>
+                        <SectionLoader message="Sincronizando agenda..." submessage="Calculando tareas fijas y bloques horarios" minHeight="350px" />
                     ) : (
                         <>
                             <PlannerToolbar controls={calendarControls} mobileSidebarSlot={sidebarContent} activeFiltersCount={selectedTags.length} />

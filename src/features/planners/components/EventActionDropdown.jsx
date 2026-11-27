@@ -109,10 +109,10 @@ export const EventActionDropdown = ({ event, isOpen, anchorRef, onClose, onSumma
                 <span>Editar</span>
             </button>
 
-            <button type="button" className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={(e) => handleAction(e, onOrder, event)}>
+            {/* <button type="button" className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={(e) => handleAction(e, onOrder, event)}>
                 <IconArrowsSort size={16} className="text-warning" />
                 <span>Ordenar</span>
-            </button>
+            </button> */}
 
             <div className="dropdown-divider my-1" />
 

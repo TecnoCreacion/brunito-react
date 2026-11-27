@@ -13,14 +13,24 @@ export const plannerFormAdapter = (rawPlanner) => {
         title: rawPlanner.title || "",
         description: rawPlanner.description || "",
 
-        // 🚀 ARQUITECTURA: El formulario exige strings separados, no objetos Date
+        // El formulario exige strings separados, no objetos Date
         startDate: startMoment ? startMoment.format("YYYY-MM-DD") : "",
         startTime: startMoment ? startMoment.format("HH:mm") : "",
 
         endDate: endMoment ? endMoment.format("YYYY-MM-DD") : "",
         endTime: endMoment ? endMoment.format("HH:mm") : "",
 
-        // Aplanamos las etiquetas para que el hook las use fácilmente
-        tags: Array.isArray(rawPlanner.tags) ? rawPlanner.tags.map((t) => t.name) : [],
+        // Conservamos el objeto completo de cada etiqueta (id, name y color)
+        tags: Array.isArray(rawPlanner.tags)
+            ? rawPlanner.tags.map((t) =>
+                  typeof t === "string"
+                      ? { id: t.toLowerCase(), name: t, color: "primary" }
+                      : {
+                            id: t.id ?? t.name?.toLowerCase(),
+                            name: t.name || "",
+                            color: t.color || "primary",
+                        },
+              )
+            : [],
     };
 };

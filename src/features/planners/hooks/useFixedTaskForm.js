@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
-const DEFAULT_SCHEDULE = { days_of_week: [], start_time: "", end_time: "", tag_ids: [] };
+const DEFAULT_SCHEDULE = { days_of_week: [], start_time: "", end_time: "" };
 
 const DEFAULT_FORM_DATA = {
     title: "",
@@ -13,27 +13,48 @@ const DEFAULT_FORM_DATA = {
     tags: [],
 };
 
-// 🚀 Agregamos isOpen a los parámetros
-export const useFixedTaskForm = (initialData, isOpen, onSubmitCallback) => {
+const toFrontendTag = (rawTag) => {
+    if (!rawTag) return null;
+
+    if (typeof rawTag === "string") {
+        const cleanName = rawTag.trim();
+        if (!cleanName) return null;
+        return {
+            id: cleanName.toLowerCase(),
+            name: cleanName,
+            color: "primary",
+        };
+    }
+
+    const cleanName = (rawTag.name || "").trim();
+    if (!cleanName) return null;
+
+    return {
+        id: rawTag.id ?? cleanName.toLowerCase(),
+        name: cleanName,
+        color: rawTag.color || "primary",
+    };
+};
+
+export const useFixedTaskForm = ({ initialData, isOpen, availableTags = [], onSubmitCallback }) => {
     const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
     const [step, setStep] = useState(1);
-    const [tagInput, setTagInput] = useState("");
 
-    // 🚀 Ahora el efecto escucha a isOpen. Cada vez que se abra el modal, evaluará qué hacer.
     useEffect(() => {
-        if (isOpen) {
-            if (initialData) {
-                setFormData({
-                    ...DEFAULT_FORM_DATA,
-                    ...initialData,
-                });
+        if (!isOpen) return;
 
-                setStep(2);
-            } else {
-                setFormData(DEFAULT_FORM_DATA);
+        if (initialData) {
+            const normalizedTags = Array.isArray(initialData.tags) ? initialData.tags.map(toFrontendTag).filter(Boolean) : [];
 
-                setStep(1);
-            }
+            setFormData({
+                ...DEFAULT_FORM_DATA,
+                ...initialData,
+                tags: normalizedTags,
+            });
+            setStep(2);
+        } else {
+            setFormData(DEFAULT_FORM_DATA);
+            setStep(1);
         }
     }, [isOpen, initialData]);
 
@@ -42,7 +63,10 @@ export const useFixedTaskForm = (initialData, isOpen, onSubmitCallback) => {
     };
 
     const handleAddSchedule = () => {
-        setFormData((prev) => ({ ...prev, schedules: [...prev.schedules, { ...DEFAULT_SCHEDULE }] }));
+        setFormData((prev) => ({
+            ...prev,
+            schedules: [...prev.schedules, { ...DEFAULT_SCHEDULE }],
+        }));
     };
 
     const handleRemoveSchedule = (index) => {
@@ -71,37 +95,64 @@ export const useFixedTaskForm = (initialData, isOpen, onSubmitCallback) => {
         });
     };
 
-    // 🚀 Lógica de etiquetas encapsulada
-    const handleAddTag = (tagToAdd) => {
-        const trimmedTag = tagToAdd.trim();
-        if (!trimmedTag) return;
+    const unselectedSuggestions = useMemo(() => {
+        const normalizedCatalog = Array.isArray(availableTags) ? availableTags.map(toFrontendTag).filter(Boolean) : [];
+
+        const selectedNames = new Set((formData.tags || []).map((t) => t.name.toLowerCase()));
+        return normalizedCatalog.filter((tag) => !selectedNames.has(tag.name.toLowerCase()));
+    }, [availableTags, formData.tags]);
+
+    const handleAddTag = (tagInput) => {
+        const normalizedTag = toFrontendTag(tagInput);
+        if (!normalizedTag) return;
 
         setFormData((prev) => {
             const currentTags = prev.tags || [];
-            if (currentTags.includes(trimmedTag)) return prev;
-            return { ...prev, tags: [...currentTags, trimmedTag] };
-        });
+            const exists = currentTags.some((t) => t.name.toLowerCase() === normalizedTag.name.toLowerCase());
+            if (exists) return prev;
 
-        setTagInput("");
+            const existingMatch = unselectedSuggestions.find((t) => t.name.toLowerCase() === normalizedTag.name.toLowerCase());
+
+            const tagToInsert = existingMatch ? { ...existingMatch, color: existingMatch.color || normalizedTag.color } : { id: `temp-${Date.now()}`, ...normalizedTag };
+
+            return { ...prev, tags: [...currentTags, tagToInsert] };
+        });
     };
 
     const handleRemoveTag = (tagToRemove) => {
+        const normalized = toFrontendTag(tagToRemove);
+        if (!normalized) return;
+
+        const targetName = normalized.name.toLowerCase();
+
         setFormData((prev) => ({
             ...prev,
-            tags: (prev.tags || []).filter((t) => t !== tagToRemove),
+            tags: (prev.tags || []).filter((t) => {
+                if (typeof t.id === "number" && typeof normalized.id === "number") {
+                    return t.id !== normalized.id;
+                }
+                return t.name.toLowerCase() !== targetName;
+            }),
         }));
     };
 
-    // 🚀 NUEVA FUNCIÓN: Alternar la selección de una etiqueta
-    const handleToggleFormTag = (tagId) => {
-        setFormData((prev) => {
-            const currentTags = prev.tag_ids || [];
-            const newTags = currentTags.includes(tagId)
-                ? currentTags.filter((id) => id !== tagId) // Remover si ya existe
-                : [...currentTags, tagId]; // Agregar si no existe
+    const handleReset = () => {
+        setFormData(DEFAULT_FORM_DATA);
+        setStep(1);
+    };
 
-            return { ...prev, tag_ids: newTags };
-        });
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        const payload = {
+            ...formData,
+            tags: (formData.tags || []).map((t) => ({
+                name: t.name.trim(),
+                color: t.color || "primary",
+            })),
+        };
+
+        onSubmitCallback(payload);
     };
 
     return {
@@ -114,19 +165,11 @@ export const useFixedTaskForm = (initialData, isOpen, onSubmitCallback) => {
         handleScheduleChange,
         handleToggleDay,
         handleNextStep: () => setStep(2),
-        tagInput, // 🚀 Exportamos el estado del input
-        setTagInput, // 🚀 Exportamos el setter
-        handleAddTag, // 🚀 Función para agregar
-        handleRemoveTag, // 🚀 Función para quitar
-        handleReset: () => {
-            setFormData(DEFAULT_FORM_DATA);
-            setTagInput("");
-        },
-        handleSubmit: (e) => {
-            e.preventDefault();
-            onSubmitCallback(formData);
-        },
-        handleToggleFormTag,
-        isEditing: !!initialData,
+        unselectedSuggestions,
+        handleAddTag,
+        handleRemoveTag,
+        handleReset,
+        handleSubmit,
+        isEditing: Boolean(initialData?.id),
     };
 };

@@ -2,12 +2,14 @@ import { useProfile } from "../hooks/useProfile";
 import { ProfileInfoForm } from "../components/ProfileInfoForm";
 import { ChangePasswordForm } from "../components/ChangePasswordForm";
 import { EmailHistoryList } from "../components/EmailHistoryList";
-import { LoadingScreen } from "@/shared/components/LoadingScreen/LoadingScreen";
+import { SectionLoader } from "@/shared/components/SectionLoader/SectionLoader";
 
 export const ProfilePage = () => {
     const { profile, isLoading, updateProfile, isUpdatingProfile, updatePassword, isUpdatingPassword } = useProfile();
 
-    if (isLoading) return <LoadingScreen />;
+    if (isLoading) {
+        return <SectionLoader message="Cargando datos del usuario..." />;
+    }
 
     return (
         <div className="container-xl py-4">
